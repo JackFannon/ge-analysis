@@ -69,12 +69,38 @@ void calibrate(){
         double ch_low;
         double ch_high;
         int type = -1;
+        // Extract the region of interest values
         roi_line >> e_true >> ch_low >> ch_high >> type;
-
         if(type >= 0){
             true_energy[type].push_back(e_true);
             roi_low[type].push_back(ch_low);
             roi_high[type].push_back(ch_high);
         }
     }
+
+    if(save_fit){
+        TCanvas* c_dummy = new TCanvas();
+        c_dummy->Print("fit_results[.ps","Portrait");
+    }
+
+    TCanvas* my_canvas = new TCanvas("c", "c", 600, 600);
+
+    double mean;
+    double erro;
+    double K40_peak_ref = -1;
+    std::string hist_names[nhists];
+    std::string hist_titles[nhists];
+
+    TH1D* Ni_sum = new TH1D("Co60+Ni_sum", "Co60+Ni_sum", nbins, 0, nbins);
+
+    for (int i = 0; i < nhists; i++) {
+        hist_names[i] = "h_"+source_name[i];
+        hist_titles[i] = source_name[i]+";Channel;Count";
+        hists[i] = new TH1D(hist_names[i].c_str(), hist_titles[i].c_str(), nbins, 0, nbins);
+
+        read_data_into_hist(file_name[i], hists[i]);
+    }
+
+
+
 }

@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <vector>
 #include "../all_headers.h"
 
 void read_data_into_hist(std::string inputname, TH1D* hist){
@@ -69,4 +70,24 @@ void set_style(int fontid){
     gStyle->SetTitleOffset(1.2, "XYZ");
     gStyle->SetTextFont(fontid);
     return;
+}
+
+void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double* mean, double* error){
+
+    // Initialise the fit
+    TF1* ge_fit = new TF1("gausexpo", "gaus[0]", search_min - 20, search_max + 20);
+
+    // Make a first guess
+    input_hist->SetAxisRange(search_min, search_max);
+    double guess_mean = input_hist->GetMean();
+    double guess_sigma = input_hist->GetRMS();
+
+    input_hist->Fit("gaus", "PI", "", guess_mean - 2.0 * guess_sigma, guess_mean + 2.0 * guess_sigma);
+    TF1* fit_func = input_hist->GetFunction("gaus");
+    double norm = fit_func->GetParameter(0);
+    guess_mean = fit_func->GetParameter(1);
+    guess_sigma = fit_func->GetParameter(2);
+    double guess_error = fit_func->GetParError(1);
+    *mean = guess_mean;
+    *error = guess_sigma;
 }
