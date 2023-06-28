@@ -1,9 +1,18 @@
+#include <forward_list>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 //#include "../all_headers.h"
 #include "utilities.C"
+
+//==================================================
+//================ LOAD FILE NAMES==================
+//==================================================
+
+std::vector<std::string> input_data;
+
+
 
 const int nhists = 1;
 
@@ -20,7 +29,8 @@ int source_type[nhists] = {
 };
 
 std::string file_name[nhists] = {
-  "../Data/2023/20230414_15MeV_Co60-01-00.csv",
+  //"../Data/2023/20230414_15MeV_Co60-01-00.csv",
+  "../Data/2023/20230606_background-01-00.csv",
 };
 
 int run_number[nhists] = {
@@ -32,6 +42,41 @@ TH1D* hists[nhists];
 TH1D* hists_calib[nhists];
 
 void calibrate(){
+
+
+    std::vector<std::string> isotope_search_names;
+    isotope_search_names.push_back("Co");
+    isotope_search_names.push_back("Cs");
+    isotope_search_names.push_back("Ni");
+
+    std::vector<std::vector<int> > isotopes_in_file;
+
+    // Search for the isotope names in the filenames. If the isotope name is present then the data
+    // should contain a peak for that isotope. Otherwise it's just background (0) and should contain peaks
+    // from K40 and Tl208.
+    // The source types are as follows:
+    //     0 -- Background (K40 & Tl208)
+    //     1 -- Co60
+    //     2 -- Cs137
+    //     3 -- NiCf
+    for(int file_index; file_index < input_data.size(); file_index++){
+        for(int source_label = 0; source_label < isotope_search_names.size(); source_label++){
+            if(input_data[file_index].find(isotope_search_names[source_label]) != std::string::npos){
+                isotopes_in_file[file_index].push_back(0);
+                isotopes_in_file[file_index].push_back(source_label+1);
+            }
+        }
+    }
+
+
+
+    std::string test_filename = "20230523_newGe_newDAQ_Co_ni-01-00.csv";
+    std::string Ni_search = "Ni";
+
+    if (test_filename.find(Ni_search) != std::string::npos) {
+        std::cout << "found Ni in filename" << std::endl;
+    }
+    return;
 
     // Set gStyle options, see utilities.C for the function
     set_style(132);
@@ -136,16 +181,19 @@ void calibrate(){
 
 
         // Search for the K40, Tl208 and the two C60 peaks
-       for (int source_type = 0; source_type <= 1; source_type++){
+       for (int source = 0; source <= 1; source++){
            for (int isotope = 0; isotope <= roi_high[i].size(); isotope++){
-               fit_peak_ge(hists[i], roi_low[source_type][isotope], roi_high[source_type][isotope], &mean, &error);
+               fit_peak_ge(hists[i], roi_low[source][isotope], roi_high[source][isotope], &mean, &error);
+
+               fit_results << run_number[i] << source << mean << " " << error << std::endl;
+
+               if(save_fit){
+                   my_canvas->Print("fit.ps", "Portrait");
+               }
            }
        }
 
 
-
-        // Find the K40 peak location
-        fit_peak_ge(hists[i], roi_low[0][0], roi_high[0][0], &mean, &error);
         if(save_fit){
             hists[i]->SetAxisRange(roi_low[0][0] - 50, roi_high[0][0] + 50);
             my_canvas->Print("fit_results.ps", "Portrait");
