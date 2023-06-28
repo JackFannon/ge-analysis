@@ -2,23 +2,22 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include "../all_headers.h"
+//#include "../all_headers.h"
 
 void read_data_into_hist(std::string inputname, TH1D* hist){
-    // Open the file input name and check that it has opened properly
+     // Open the file input name and check that it has opened properly
     std::ifstream input_data;
     input_data.open(inputname.c_str());
     if(!input_data.is_open()){
         std::cout << "!!!!! Cannot find " << inputname.c_str() << "!!!!!" << std::endl;
         return;
     }
-
+    std::cout << "Reading data" << std::endl;
     // Create a buffer string to load data into
     std::string buffer;
 
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
-
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 
@@ -28,7 +27,7 @@ void read_data_into_hist(std::string inputname, TH1D* hist){
     }
 
     // String to store the channel number in (this is not used, but is good to be named something other than "useless variable")
-    std::string channel;
+    int channel;
 
     // Format of data is as follows:
     // Channel, RSV1, RSV2, ..., RSV9, RSV10
@@ -41,13 +40,20 @@ void read_data_into_hist(std::string inputname, TH1D* hist){
         // Put contents on the line into a stringstream
         std::stringstream line(buffer);
 
+        std::string token;
         // Load the channel number from "line" into "channel"
-        line >> channel;
 
+        line >> channel;
         // Loop over the remaining RSV numbers in the line
         for (int i = 0; i < 10; i++) {
-            int count = 0;
+            int count = -9999;
+            if(line.peek() == ','){
+                line.ignore();
+            }
             line >> count;
+            if(count){
+                std::cout << count << std::endl;
+            }
             bin++;
             if (bin <= nbins) {
                 hist->SetBinContent(bin, count);
@@ -90,4 +96,65 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     double guess_error = fit_func->GetParError(1);
     *mean = guess_mean;
     *error = guess_sigma;
+}
+
+void plot_channel_hist(std::string inputFile){
+     // Open the file input name and check that it has opened properly
+    std::ifstream input_data;
+    input_data.open(inputFile.c_str());
+    if(!input_data.is_open()){
+        std::cout << "!!!!! Cannot find " << inputFile.c_str() << "!!!!!" << std::endl;
+        return;
+    }
+    std::cout << "Reading data" << std::endl;
+    // Create a buffer string to load data into
+    std::string buffer;
+
+    // Counter for the bin that is currently being read from the data file
+    int bin = 0;
+    TH1D* hist = new TH1D("", "", 4096, 0, 4096);
+    // Max number of bins that we should read to
+    int nbins = hist->GetNbinsX();
+
+    // Need to skip the first 9 lines of the data file as these are all meta-data comments
+    for (int i = 0; i < 9; i++) {
+        std::getline(input_data, buffer);
+    }
+
+    // String to store the channel number in (this is not used, but is good to be named something other than "useless variable")
+    int channel;
+
+    // Format of data is as follows:
+    // Channel, RSV1, RSV2, ..., RSV9, RSV10
+    // We're not interested in "Channel" but are interested in RSV1-10
+
+    // Loop over the rest of the file
+    while (!input_data.eof()) {
+        std::getline(input_data, buffer);
+
+        // Put contents on the line into a stringstream
+        std::stringstream line(buffer);
+
+        std::string token;
+        // Load the channel number from "line" into "channel"
+
+        line >> channel;
+        // Loop over the remaining RSV numbers in the line
+        for (int i = 0; i < 10; i++) {
+            int count = -9999;
+            if(line.peek() == ','){
+                line.ignore();
+            }
+            line >> count;
+            if(count){
+                std::cout << count << std::endl;
+            }
+            bin++;
+            if (bin <= nbins) {
+                hist->SetBinContent(bin, count);
+            }
+        }
+    }
+
+    hist->Draw();
 }
