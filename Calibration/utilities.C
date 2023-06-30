@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <fstream>
@@ -51,9 +52,6 @@ void read_data_into_hist(std::string inputname, TH1D* hist){
                 line.ignore();
             }
             line >> count;
-            if(count){
-                std::cout << count << std::endl;
-            }
             bin++;
             if (bin <= nbins) {
                 hist->SetBinContent(bin, count);
@@ -98,13 +96,12 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     *error = guess_sigma;
 }
 
-void plot_channel_hist(std::string inputFile){
-     // Open the file input name and check that it has opened properly
+TH1D* plot_channel_hist(std::string inputFile, std::string directory){
+    // Open the file input name and check that it has opened properly
     std::ifstream input_data;
-    input_data.open(inputFile.c_str());
+    input_data.open(directory + inputFile.c_str());
     if(!input_data.is_open()){
         std::cout << "!!!!! Cannot find " << inputFile.c_str() << "!!!!!" << std::endl;
-        return;
     }
     std::cout << "Reading data" << std::endl;
     // Create a buffer string to load data into
@@ -112,7 +109,7 @@ void plot_channel_hist(std::string inputFile){
 
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
-    TH1D* hist = new TH1D("", "", 4096, 0, 4096);
+    TH1D* hist = new TH1D(inputFile.c_str(), inputFile.c_str(), 4096, 0, 4096);
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 
@@ -146,9 +143,6 @@ void plot_channel_hist(std::string inputFile){
                 line.ignore();
             }
             line >> count;
-            if(count){
-                std::cout << count << std::endl;
-            }
             bin++;
             if (bin <= nbins) {
                 hist->SetBinContent(bin, count);
@@ -156,5 +150,29 @@ void plot_channel_hist(std::string inputFile){
         }
     }
 
-    hist->Draw();
+    return hist;
+}
+
+
+std::vector<std::string> load_data(std::string filenames, std::string directory){
+
+    std::vector<std::string> file_list;
+
+    std::ifstream input_file;
+    input_file.open(directory + filenames);
+
+    if(!input_file.is_open()){
+        std::cerr << "Could not open " << directory + filenames << std::endl;
+    }
+
+    std::string buffer;
+    while(!input_file.eof()){
+        std::getline(input_file, buffer);
+        std::stringstream input_line(buffer);
+        std::string file_name;
+        input_line >> file_name;
+        file_list.push_back(file_name);
+    }
+
+    return file_list;
 }
