@@ -13,7 +13,6 @@ void read_data_into_hist(std::string inputname, TH1D* hist){
         std::cout << "!!!!! Cannot find " << inputname.c_str() << "!!!!!" << std::endl;
         return;
     }
-    std::cout << "Reading data" << std::endl;
     // Create a buffer string to load data into
     std::string buffer;
 

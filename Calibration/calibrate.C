@@ -7,46 +7,55 @@
 //#include "../all_headers.h"
 #include "utilities.C"
 
-//==================================================
-//================ LOAD FILE NAMES==================
-//==================================================
+//====================================================================================================
+//======================================== CONFIG OPTIONS ============================================
+//====================================================================================================
 
-std::vector<std::string> input_data;
+const std::string DATA_LIST = "data_list.txt";
+const std::string DATA_LIST_DIR = "/Users/jack/Software/GeAnalysis/data/2023/";
+const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
+const std::string ROI_FILE = "roi.txt";
 
-const std::string DATA_DIR = "/Users/jack/Software/GeAnalysis/Data/2023/raw/";
+const std::string OUTPUT_ROOT_FILE = "calib_hists.root";
 
-const int nhists = 23;
-
-int data_type = 0;
-
-bool Ni_sum_flag = false;
-
-std::string source_name[3] = {
-  "K40",
-  "Co60",
-  "NiCf"
+const int NUM_OF_ISOTOPES = 4;
+const std::string ISOTOPE_SYMBOLS[NUM_OF_ISOTOPES] = {
+"Bg(K40_Tl208)",
+"Co",
+"Cs",
+"Ni"
 };
 
+bool Ni_sum_flag = false;
+const int nhists = 1;
 int run_number[nhists] = {
     9999,
 };
 
+// Set the number of bins for the detector
+const int nbins = 4096;
+
+const bool save_fit = true;
+
+const bool K40norm = false;
+
+//====================================================================================================
+//====================================================================================================
+//====================================================================================================
+
 void calibrate(){
+    // Set gStyle options, see utilities.C for the function
+    set_style(132);
 
-    std::vector<std::string> ge_data_files = load_data("data_list.txt", "/Users/jack/Software/GeAnalysis/Data/2023/");
+    // Read in the list of files from data_list.txt
+    std::vector<std::string> ge_data_files = load_data(DATA_LIST, DATA_LIST_DIR);
 
-    TFile* file = new TFile("histograms.root", "RECREATE");
+    // Open the ROOT file to store output histograms in
+    TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
+
     for(std::string file_name: ge_data_files){
         plot_channel_hist(file_name, DATA_DIR)->Write();
     }
-    TH1D* hists[ge_data_files.size()];
-
-    std::vector<std::string> isotope_search_names;
-    isotope_search_names.push_back("K");
-    isotope_search_names.push_back("Co");
-    isotope_search_names.push_back("Cs");
-    isotope_search_names.push_back("Ni");
-
 
     std::vector<std::vector<int> > isotopes_in_file;
 
@@ -61,40 +70,37 @@ void calibrate(){
     for(int file_index = 0; file_index < ge_data_files.size(); file_index++){
         std::vector<int> isotopes;
         isotopes.push_back(0);
-        for(int source_label = 0; source_label < isotope_search_names.size(); source_label++){
-            if(ge_data_files[file_index].find(isotope_search_names[source_label]) != std::string::npos){
-                isotopes.push_back(source_label);
+
+        for(int source_index = 0; source_index < NUM_OF_ISOTOPES; source_index++){
+            if(ge_data_files[file_index].find(ISOTOPE_SYMBOLS[source_index]) != std::string::npos){
+                isotopes.push_back(source_index);
             }
         }
         isotopes_in_file.push_back(isotopes);
     }
 
-
+    // Print out the isotope type for each file
+    int index = 0;
     for(std::vector<int> j: isotopes_in_file){
-        std::cout << "isotope type: ";
+
+        std::cout << "isotope type in : " << ge_data_files[index];
+        index++;
         for(int i: j){
             std::cout << i << ", ";
         }
         std::cout << std::endl;
     }
 
-    // Set gStyle options, see utilities.C for the function
-    set_style(132);
-    // Set max number of bins
-    const int nbins = 4096;
-
     std::ofstream fit_results;
     fit_results.open("calib_fit_results.txt");
-    gStyle->SetOptFit();
-    gStyle->GetPadTopMargin();
-    bool save_fit = true;
-    bool K40norm = false;
 
-    // Define vectors for energy and region of interest
-    std::vector<double> true_energy[4];
-    std::vector<double> roi_low[4];
-    std::vector<double> roi_high[4];
 
+    //Define vectors for the:
+    //    true_energy_all - the true energy of each isotope peak
+    //    ch_mean_all     - the mean channel number for each peak
+    //    ch_error_all    - the error on the mean channel number for each peak
+    //    res_all         - the residual (E_expected - E_fit)/E_fit for each peak
+    //    res_error_all   - the error on the above value
     std::vector<double> true_energy_all;
     std::vector<double> ch_mean_all;
     std::vector<double> ch_error_all;
@@ -104,16 +110,18 @@ void calibrate(){
 //==========================================================================================
 //=========================== EXTRACT REGION OF INTEREST DATA ==============================
 //==========================================================================================
-    std::string roi_filename;
-    roi_filename = "roi.txt";
+    // Define vectors for energy and region of interest
+    std::vector<double> true_energy[4];
+    std::vector<double> roi_low[4];
+    std::vector<double> roi_high[4];
 
     std::string buffer;
     std::ifstream roi_data;
 
-    roi_data.open(roi_filename.c_str());
+    roi_data.open(ROI_FILE.c_str());
 
     if(!roi_data.is_open()){
-        std::cout << "!!!!! Cannot find " << roi_filename.c_str() << "!!!!!" << std::endl;
+        std::cout << "!!!!! Cannot find " << ROI_FILE.c_str() << "!!!!!" << std::endl;
         return;
     }
 
@@ -136,99 +144,96 @@ void calibrate(){
 //==========================================================================================
 //==========================================================================================
 
-    if(save_fit){
-        TCanvas* c_dummy = new TCanvas();
-        c_dummy->Print("fit_results.ps","Portrait");
-    }
-
-
     double mean;
     double error;
     double K40_peak_ref = -1;
-    std::string hist_names[ge_data_files.size()];
-    std::string hist_titles[nhists];
+    TH1D* hists[ge_data_files.size()];
 
     TH1D* Ni_sum = new TH1D("Co60+Ni_sum", "Co60+Ni_sum", nbins, 0, nbins);
 
-    //plot_channel_hist(file_name[0]);
-    //return;
-
     // Loop over the data files.
     for(int file_index = 0; file_index < ge_data_files.size(); file_index++){
-        hist_names[file_index] = "h_" + ge_data_files[file_index];
-        hist_titles[file_index] = ge_data_files[file_index] + ";Channel;Count";
-        hists[file_index] = new TH1D(hist_names[file_index].c_str(), hist_titles[file_index].c_str(), nbins, 0, nbins);
+        hists[file_index] = new TH1D(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
+        // Read data out of the file ge_data_files[file_index] into the histogram created above
         read_data_into_hist(DATA_DIR + ge_data_files[file_index], hists[file_index]);
 
-        // Loop over isotope peaks that should be present in the data for this file
+        //============================================================================================
+        //==================================== FIT THE PEAKS =========================================
+        //============================================================================================
+        // Loop over isotope peaks that should be present in the data for this file. Using two for loops here as there are three types of data:
+        // Background only -- K40 and Tl208 peaks (2 peaks)
+        // Co60            -- Two C60 peaks and the background peaks (at least 4 peaks)
+        // NiCf            -- Multiple NiCf peaks and the background peaks (at least 15 peaks)
+        // Got to loop over the data type and then loop over the peaks that are present in that data type
         for (int isotope_type: isotopes_in_file[file_index]){
-
-
-
             for(int isotope_peak = 0; isotope_peak < roi_high[isotope_type].size(); isotope_peak++){
-                std::string canvas_name = std::to_string(isotope_peak) + isotope_search_names[isotope_type] + ge_data_files[file_index] + "fit";
-                TCanvas* my_canvas = new TCanvas(canvas_name.c_str(), canvas_name.c_str(), 600, 600);
 
-                fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
+                // Setup a canvas named after the filename, "file type (BG, Co, Ni)" and the peak number
+                std::string canvas_name = std::to_string(isotope_peak) + ISOTOPE_SYMBOLS[isotope_type] + ge_data_files[file_index];
+                TCanvas* my_canvas = new TCanvas(canvas_name.c_str(), canvas_name.c_str(), 600, 600);
                 my_canvas->SetTitle(ge_data_files[file_index].c_str());
+
+                // Fit the peak with a gaussian using the information from the region of interest file
+                fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
+
+                // Draw the histogra,
                 hists[file_index]->Draw();
+
+                // Store information about the fit (mean and error) and the true energy that the peak should represent
                 true_energy_all.push_back(true_energy[isotope_type][isotope_peak]);
                 ch_mean_all.push_back(mean);
                 ch_error_all.push_back(error);
 
+                // Write the histogram to the root file with a slightly larger axis range than the range of interest.
                 if(save_fit){
                     hists[file_index]->SetAxisRange(roi_low[isotope_type][isotope_peak] - 50, roi_high[isotope_type][isotope_peak] + 50);
                     my_canvas->Write();
                 }
             }
         }
-        TGraphErrors *energy_graph = new TGraphErrors();
+        //============================================================================================
+        //============================================================================================
+        //============================================================================================
 
-        for(int point = 0; point < true_energy_all.size(); point++){
-            energy_graph->SetPoint(point, true_energy_all[point], ch_mean_all[point]);
-            energy_graph->SetPointError(point, 0., ch_error_all[point]);
-        }
+        //--------------------------------------------------------------------------------------------
 
-        energy_graph->SetTitle("");
-
-        energy_graph->Draw();
-
-       std::string print_name = "calib" + ge_data_files[file_index];
-
+        //============================================================================================
+        //============================= PLOT CALIBRATED ENERGY GRAPH =================================
+        //============================================================================================
+        std::string print_name = "calib" + ge_data_files[file_index];
         TCanvas *c_calibfit = new TCanvas(print_name.c_str() , print_name.c_str(), 600, 600);
-        //  c_calibfit->Divide(1,2,0,0);
         c_calibfit->Divide(1, 2);
-
         TVirtualPad *pad1 = c_calibfit->cd(1);
-
-        Double_t ch_max = 3000;
-        if (data_type == 1){
-            ch_max = 32000;
-        }else if (data_type == 2){
-            ch_max = 16000;
-        }
-
-        TH1F *h1 = pad1->DrawFrame(0, 0, 10000, ch_max, ";True energy (keV); MCA channel");
+        TH1F *h1 = pad1->DrawFrame(0, 0, 10000, nbins, ";True energy (keV); MCA channel");
         pad1->SetLeftMargin(0.15);
         pad1->SetBottomMargin(0.15);
         h1->SetTitleSize(0.06, "XY");
         h1->SetLabelSize(0.06, "XY");
+
+        TGraphErrors *energy_graph = new TGraphErrors();
+        for(int point = 0; point < true_energy_all.size(); point++){
+            energy_graph->SetPoint(point, true_energy_all[point], ch_mean_all[point]);
+            energy_graph->SetPointError(point, 0., ch_error_all[point]);
+        }
+        energy_graph->SetTitle("Calibrated energy");
+        energy_graph->Draw();
         energy_graph->SetMarkerStyle(20);
         energy_graph->Draw("PSAME");
-        // energy_graph->Fit("pol1","","",0,2900); // set fit range in order to avoid Ni
-        // points... energy_graph->Fit("pol1","","",3000,10000);
-        energy_graph->Fit("pol1", "", "", 0, 10000); // set fit range in order to include only Ni points...
-        // energy_graph->Fit("pol1");
 
+        energy_graph->Fit("pol1", "", "", 0, 10000);
         TF1 *func_calib = energy_graph->GetFunction("pol1");
-
         Double_t p0 = func_calib->GetParameter(0);
         Double_t p1 = func_calib->GetParameter(1);
         Double_t intercept = -p0 / p1;
         Double_t slope = 1.0 / p1;
 
-        // calculate residual
+        TVirtualPad *pad2 = c_calibfit->cd(2);
+        // g_res->SetTitle(";True Energy (keV);(E_{obs} - E_{fit})/E_{fit}");
+        pad2->SetLeftMargin(0.15);
+        pad2->SetBottomMargin(0.15);
+
+        // Calculate the residual -- the difference between the expected energy and the energy the calibration returns
         for (Int_t i = 0; i < true_energy_all.size(); i++) {
             Double_t ch_exp = p0 + p1 * true_energy_all[i];
             res_all.push_back((ch_mean_all[i] - ch_exp) / ch_exp);
@@ -251,12 +256,6 @@ void calibrate(){
             }
         }
 
-        // g_res->SetTitle(";True Energy (keV);(E_{obs} - E_{fit})/E_{fit}");
-        TVirtualPad *pad2 = c_calibfit->cd(2);
-        pad2->SetLeftMargin(0.15);
-        pad2->SetBottomMargin(0.15);
-    // TH1F * h2 = pad2->DrawFrame(0,-0.03,10000,0.03,";True energy (keV);
-    // (E_{obs} - E_{fit})/E_{fit}");
         TH1F *h2 = pad2->DrawFrame(0.0, min_res + 0.1 * min_res, 10000.0, max_res + 0.1 * max_res);
         pad2->SetGrid();
         h2->SetTitleSize(0.06, "XY");
@@ -268,14 +267,25 @@ void calibrate(){
         g_res->SetMarkerStyle(20);
         g_res->Draw("PSAME");
 
+        // Write the calibration plot to the ROOT file
         c_calibfit->Write();
+
+        // Clear all of the vectors so they are empty for the next file
         res_all.clear();
         res_error_all.clear();
         ch_mean_all.clear();
         ch_error_all.clear();
         true_energy_all.clear();
 
+        //============================================================================================
+        //============================================================================================
+        //============================================================================================
 
+        //--------------------------------------------------------------------------------------------
+
+        //============================================================================================
+        //============================================================================================
+        //============================================================================================
         Double_t e_min = intercept;
         Double_t e_max = intercept + (Double_t)nbins * slope;
         TCanvas *c_calib = new TCanvas("ccalib", "ccalib", 600, 600);
@@ -294,7 +304,13 @@ void calibrate(){
         std::cout << "Slope = " << slope << std::endl;
         std::cout << "Intercept = " << intercept << std::endl;
         std::cout << "==========================================" << std::endl;
+        //============================================================================================
+        //============================================================================================
+        //============================================================================================
     }
+
+
+
     file->Close();
     return;
 
