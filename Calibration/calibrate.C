@@ -16,7 +16,7 @@ const std::string DATA_LIST_DIR = "/Users/jack/Software/GeAnalysis/data/2023/";
 const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
 const std::string ROI_FILE = "roi.txt";
 
-const std::string OUTPUT_ROOT_FILE = "calib_hists.root";
+const std::string OUTPUT_ROOT_FILE = "histograms.root";
 
 const int NUM_OF_ISOTOPES = 4;
 const std::string ISOTOPE_SYMBOLS[NUM_OF_ISOTOPES] = {
@@ -153,6 +153,7 @@ void calibrate(){
 
     // Loop over the data files.
     for(int file_index = 0; file_index < ge_data_files.size(); file_index++){
+        size_t last_dot = ge_data_files[file_index].find_last_of(".");
         hists[file_index] = new TH1D(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
         // Read data out of the file ge_data_files[file_index] into the histogram created above
