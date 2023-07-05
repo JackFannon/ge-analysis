@@ -83,12 +83,12 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     //TF1* ge_fit = new TF1("gausexpo", "gaus[0]", search_min - 20, search_max + 20);
     TF1* ge_fit = new TF1("gauslin", "gaus(0) + pol1(3)", search_min, search_max);
     ge_fit->SetParLimits(0, 0., pow(10., 6));
-    ge_fit->SetParLimits(1, search_min, search_max);
+    //ge_fit->SetParLimits(1, search_min, search_max);
     ge_fit->SetParLimits(2, .1, 10.);
-    ge_fit->SetParLimits(3, 0., pow(10., 6));
+    //ge_fit->SetParLimits(3, 0., pow(10., 6));
     ge_fit->SetParameter(0, 100.);
-    ge_fit->SetParameter(1, (search_min + search_max) / 2);
-    ge_fit->SetParameter(2, 1.);
+    //ge_fit->SetParameter(1, (search_min + search_max) / 2.);
+    //ge_fit->SetParameter(2, 1.);
 
 
     // Make a first guess
@@ -96,8 +96,19 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     double guess_mean = input_hist->GetMean();
     double guess_sigma = input_hist->GetRMS();
 
+    ge_fit->SetParLimits(1, guess_mean - 3, guess_mean + 3);
+    ge_fit->SetParameter(1, guess_mean);
+    ge_fit->SetParameter(2, guess_sigma);
+    //ge_fit->FixParameter(1, guess_mean);
+
     //input_hist->Fit("gaus", "PI", "", guess_mean - 2.0 * guess_sigma, guess_mean + 2.0 * guess_sigma);
-    input_hist->Fit( "gauslin", "PIR");
+    for (int i = 0; i < 10; i++) {
+        input_hist->Fit( "gauslin", "LIRQ");
+    }
+
+
+
+    input_hist->Fit( "gauslin", "LIR");
     //TF1* fit_func = input_hist->GetFunction("gaus");
     //double norm = fit_func->GetParameter(0);
     //guess_mean = fit_func->GetParameter(1);
@@ -118,7 +129,6 @@ TH1D* plot_channel_hist(std::string inputFile, std::string directory){
     if(!input_data.is_open()){
         std::cout << "!!!!! Cannot find " << inputFile.c_str() << "!!!!!" << std::endl;
     }
-    std::cout << "Reading data" << std::endl;
     // Create a buffer string to load data into
     std::string buffer;
 
@@ -186,7 +196,9 @@ std::vector<std::string> load_data(std::string filenames, std::string directory)
         std::stringstream input_line(buffer);
         std::string file_name;
         input_line >> file_name;
-        file_list.push_back(file_name);
+        if(!file_name.empty()){
+            file_list.push_back(file_name);
+        }
     }
 
     return file_list;

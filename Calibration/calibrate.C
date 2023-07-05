@@ -11,7 +11,7 @@
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
 
-const std::string DATA_LIST = "data_list.txt";
+const std::string DATA_LIST = "newGe_list.txt";
 const std::string DATA_LIST_DIR = "/Users/jack/Software/GeAnalysis/data/2023/";
 const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
 const std::string ROI_FILE = "roi.txt";
@@ -153,7 +153,7 @@ void calibrate(){
 
     // Loop over the data files.
     for(int file_index = 0; file_index < ge_data_files.size(); file_index++){
-        size_t last_dot = ge_data_files[file_index].find_last_of(".");
+
         hists[file_index] = new TH1D(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
         // Read data out of the file ge_data_files[file_index] into the histogram created above
@@ -171,7 +171,11 @@ void calibrate(){
             for(int isotope_peak = 0; isotope_peak < roi_high[isotope_type].size(); isotope_peak++){
 
                 // Setup a canvas named after the filename, "file type (BG, Co, Ni)" and the peak number
-                std::string canvas_name = std::to_string(isotope_peak) + ISOTOPE_SYMBOLS[isotope_type] + ge_data_files[file_index];
+                std::string canvas_name = ge_data_files[file_index] + ISOTOPE_SYMBOLS[isotope_type] + std::to_string(isotope_peak);
+
+                std::cout << ge_data_files[file_index] << "    " << canvas_name << std::endl;
+
+
                 TCanvas* my_canvas = new TCanvas(canvas_name.c_str(), canvas_name.c_str(), 600, 600);
                 my_canvas->SetTitle(ge_data_files[file_index].c_str());
 
@@ -187,9 +191,13 @@ void calibrate(){
                 ch_error_all.push_back(error);
 
                 // Write the histogram to the root file with a slightly larger axis range than the range of interest.
-                if(save_fit){
+                if(!save_fit){
                     hists[file_index]->SetAxisRange(roi_low[isotope_type][isotope_peak] - 50, roi_high[isotope_type][isotope_peak] + 50);
                     my_canvas->Write();
+                }
+                if(save_fit){
+                    hists[file_index]->SetAxisRange(roi_low[isotope_type][isotope_peak] - 50, roi_high[isotope_type][isotope_peak] + 50);
+                    my_canvas->SaveAs(("../Output/" + canvas_name + ".png").c_str());
                 }
             }
         }
