@@ -182,7 +182,7 @@ void calibrate(){
                 // Fit the peak with a gaussian using the information from the region of interest file
                 fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
 
-                // Draw the histogra,
+                // Draw the histogram
                 hists[file_index]->Draw();
 
                 // Store information about the fit (mean and error) and the true energy that the peak should represent
