@@ -10,7 +10,7 @@
 //====================================================================================================
 
 const std::string DATA_LIST = "newGe_list.txt";
-const std::string DATA_LIST_DIR = "/Users/jack/Software/GeAnalysis/data/2023/";
+const std::string DATA_LIST_DIR = "../Data/2023/";
 const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
 const std::string ROI_FILE = "roi.txt";
 
