@@ -41,6 +41,7 @@ const bool K40norm = false;
 //====================================================================================================
 //====================================================================================================
 
+void calibrate(){
     // Set gStyle options, see utilities.C for the function
     set_style(132);
 
@@ -50,9 +51,9 @@ const bool K40norm = false;
     // Open the ROOT file to store output histograms in
     TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
 
-    /* for(std::string file_name: ge_data_files){ */
-    /*     plot_channel_hist(file_name, DATA_DIR)->Write(); */
-    /* } */
+    for(std::string file_name: ge_data_files){
+        plot_channel_hist(file_name, DATA_DIR)->Write();
+    }
 
     std::vector<std::vector<int> > isotopes_in_file;
 
@@ -78,15 +79,15 @@ const bool K40norm = false;
 
     // Print out the isotope type for each file
     int index = 0;
-    /* for(std::vector<int> j: isotopes_in_file){ */
+    for(std::vector<int> j: isotopes_in_file){
 
-    /*     std::cout << "isotope type in : " << ge_data_files[index]; */
-    /*     index++; */
-    /*     for(int i: j){ */
-    /*         std::cout << i << ", "; */
-    /*     } */
-    /*     std::cout << std::endl; */
-    /* } */
+        std::cout << "isotope type in : " << ge_data_files[index];
+        index++;
+        for(int i: j){
+            std::cout << i << ", ";
+        }
+        std::cout << std::endl;
+    }
 
     std::ofstream fit_results;
     fit_results.open("calib_fit_results.txt");
@@ -119,6 +120,7 @@ const bool K40norm = false;
 
     if(!roi_data.is_open()){
         std::cout << "!!!!! Cannot find " << ROI_FILE.c_str() << "!!!!!" << std::endl;
+        return;
     }
 
     while (!roi_data.eof()) {
@@ -317,3 +319,6 @@ const bool K40norm = false;
 
 
     file->Close();
+    return;
+
+}
