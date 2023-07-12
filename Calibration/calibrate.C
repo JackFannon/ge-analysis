@@ -51,9 +51,9 @@ void calibrate(){
     // Open the ROOT file to store output histograms in
     TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
 
-    for(std::string file_name: ge_data_files){
-        plot_channel_hist(file_name, DATA_DIR)->Write();
-    }
+    /* for(std::string file_name: ge_data_files){ */
+    /*     plot_channel_hist(file_name, DATA_DIR)->Write(); */
+    /* } */
 
     std::vector<std::vector<int> > isotopes_in_file;
 
