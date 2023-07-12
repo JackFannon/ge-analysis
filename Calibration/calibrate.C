@@ -79,15 +79,15 @@ void calibrate(){
 
     // Print out the isotope type for each file
     int index = 0;
-    for(std::vector<int> j: isotopes_in_file){
+    /* for(std::vector<int> j: isotopes_in_file){ */
 
-        std::cout << "isotope type in : " << ge_data_files[index];
-        index++;
-        for(int i: j){
-            std::cout << i << ", ";
-        }
-        std::cout << std::endl;
-    }
+    /*     std::cout << "isotope type in : " << ge_data_files[index]; */
+    /*     index++; */
+    /*     for(int i: j){ */
+    /*         std::cout << i << ", "; */
+    /*     } */
+    /*     std::cout << std::endl; */
+    /* } */
 
     std::ofstream fit_results;
     fit_results.open("calib_fit_results.txt");
