@@ -3,7 +3,7 @@ CFLAGS	= -O -g
 LD	= gfortran
 
 #
-CERN = /home/skofl/sklib_gcc4.8.5/cern/2005
+CERN = /usr/local/sklib_gcc8/cern/2005
 #CERN = /usr/local/sklib_g77/cern/2005
 LIBDIR	= -L$(CERN)/lib
 CLIB	= -lgeant321 -ljetset74 -lmathlib \
