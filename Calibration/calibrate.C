@@ -41,7 +41,6 @@ const bool K40norm = false;
 //====================================================================================================
 //====================================================================================================
 
-void calibrate(){
     // Set gStyle options, see utilities.C for the function
     set_style(132);
 
@@ -120,7 +119,6 @@ void calibrate(){
 
     if(!roi_data.is_open()){
         std::cout << "!!!!! Cannot find " << ROI_FILE.c_str() << "!!!!!" << std::endl;
-        return;
     }
 
     while (!roi_data.eof()) {
@@ -319,6 +317,3 @@ void calibrate(){
 
 
     file->Close();
-    return;
-
-}
