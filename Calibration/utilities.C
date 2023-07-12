@@ -169,7 +169,7 @@ std::vector<std::string> load_data(std::string filenames, std::string directory)
     std::vector<std::string> file_list;
 
     std::ifstream input_file;
-    input_file.open(directory + filenames);
+    input_file.open((directory + filenames).c_str());
 
     if(!input_file.is_open()){
         std::cerr << "Could not open " << directory + filenames << std::endl;
