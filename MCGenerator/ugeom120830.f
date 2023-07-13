@@ -57,24 +57,24 @@ C is made from brass
 C--------> Mylar 
       DATA DMYLAR/1.38/
 C--------> geometory of Ge crystal
-      DATA length/6.64/
-      DATA diam/5.75/
+      DATA length/5.96/
+      DATA diam/5.73/
 C inactive thickness written in the spec. sheet
       DATA inact/0.00003/
 C inactive thickness tuned to reproduce Bi207 measurement
 c      DATA inact/0.0041/
-      DATA hole_d/0.91/
-      DATA hole_l/5.84/
+      DATA hole_d/1.08/
+      DATA hole_l/5.19/
 C--------> geometory of Be window
       DATA bethick/0.05/
 C--------> geometory of Al hoil
-      DATA althick/0.0015/
+      DATA althick/0.08/
 C--------> geometory of scintilator
       DATA scthick/0.1/
 C--------> geometry of detector capsul
-      DATA rcapsul/6.985/
+      DATA rcapsul/7.0/
       DATA tcapsul/0.12/
-      DATA lcapsul/14./
+      DATA lcapsul/13.4/
 C--------> geometry of Beam pipe
       DATA rpipe_o/3.3/
       DATA rpipe_i/3./
@@ -83,9 +83,9 @@ C--------> geometry of Ti window
       DATA tithick/0.003/
       DATA tithick_test/0.01/
 C--------> geometry of plastic part of the aluminized mylar 
-      DATA plmythick/0.0100/
+      DATA plmythick/0.0030/
 C--------> geometry of Aluminum part of the aluminized mylar 
-      DATA almythick/0.0001/
+      DATA almythick/0.0030/
 
 C--------> position of materials
       gelen1 = length - hole_l - inact
