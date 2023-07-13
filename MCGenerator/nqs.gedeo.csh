@@ -37,7 +37,7 @@ while($i <= 12100)
 set ene = `printf "%05d" $i`
 set f_err = /home/jfannon/software/GeAnalysis/MCGenerator/err/$ene.err
 set f_out = /home/jfannon/software/GeAnalysis/MCGenerator/log/$ene.log
-pjsub -q lowe -e $f_err -o $f_out script/gedeo$ene.csh
+pjsub -L rscgrp=lowe -e $f_err -o $f_out script/gedeo$ene.csh
 #qsub -q ALL -e $f_err -o $f_out script/gedeo$ene.csh
 
   @   i++
