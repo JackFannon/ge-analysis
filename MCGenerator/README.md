@@ -59,3 +59,38 @@ Executing this will submit all of the jobs in the `scripts` directory, and
 output simulation in the form of `.hbk` files in the `hbk` directory. Use the
 utility `h2root` to convert these to ROOT files. There is a script that does
 this called `h2root.sh`.
+
+## Fit the beam data
+This step compares the beam data with the MC sample and finds the best fit for
+the initial electron energy, before traversing through the Ti window at the end
+of the beam pipe and the various components of the germanium detector.
+
+### Modify fit_linac_data.C
+The ROOT macro `fit_linac_data.C` uses the calibration constants from the first
+part -- note that this ROOT macro uses the `po` and `p1` values from the fit,
+not the slope and intercept that is used in a previous step -- in the array
+`calib_const`. These need updating to be representative of the Ni calibration
+file -- I think.
+
+### Create the list of runs for a measurement of the energy scale.
+A `.txt` file is used to contain the following information in columns:
+- SK run number
+- Approximate LINAC energy
+- 0
+- Approximate X-position
+- Approximate Z-position
+- Filename of the Ge data
+- Lower bound of MC input electron energy
+- Upper bound of MC input electron energy
+- Lower bound of Ge energy deposit for chi2 calculation
+- Upper bound of Ge energy deposit for chi2 calculation
+- Attenuator flag - 1: without attenuator, 2: with attenuator
+- Ignored and can be used for commenting
+
+Any lines that begin with a `#` are also ignored by the macro
+
+**Important note**
+The first three columns need to be consistent with the information stored in
+`/home/sklowe/linac/const/linac_sk#_runsum.dat`
+
+### Fit the Ge spectrum and determine the best fit
