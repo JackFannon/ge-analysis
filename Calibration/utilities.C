@@ -42,7 +42,6 @@ void read_data_into_hist(std::string inputname, TH1D* hist){
 
         std::string token;
         // Load the channel number from "line" into "channel"
-
         line >> channel;
         // Loop over the remaining RSV numbers in the line
         for (int i = 0; i < 10; i++) {
