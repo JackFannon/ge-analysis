@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "headers.h"
+//#include "headers.h"
 
 const int nbins = 4096;
 const int data_type = 0;
@@ -19,7 +19,7 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
 
-const std::string mc_filename;
+const std::string mc_filename = "13040.root";
 
 float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plot_flag = false, TH1D * h_smc = new TH1D("", "", 100, 0, 100), bool flag = false){
     int bin_min = h_data->FindBin(e_min);
@@ -130,33 +130,44 @@ void fitter(std::string data_filename,
             std::string xpos,
             std::string zpos){
 
+    std::cout << "e_min: " << e_min << " e_max: " << e_max << std::endl;
     // Set drawing options using utilities function
     set_style(132);
 
-    // Initiate the histogram for channel counts
+    // Initialise the histogram for channel counts
     TH1D* h_data_raw = new TH1D("h_data", "h_data", nbins, 0, nbins);
 
+    // Read the raw channel and hits data in to the histogram
     read_data_into_hist(data_filename, h_data_raw);
 
+    // Initialise a histogram for the calibrated data. Note the binning here is shifted
+    //   using the calibration values defined above.
     TH1D* h_data_calib = new TH1D("", "", nbins, e_min, e_max);
 
+    // Set the bin content of the calibrated histogram to the same as the bin of the raw data
     for (int bin = 0; bin < nbins; bin++) {
         h_data_calib->SetBinContent(bin + 1, h_data_raw->GetBinContent(bin+1));
         h_data_calib->SetBinError(bin + 1, sqrt(h_data_raw->GetBinContent(bin + 1)));
     }
 
     TCanvas* my_canvas = new TCanvas("c1", "c1");
+    h_data_calib->Draw();
 
+    my_canvas->Print(output_filename.c_str());
+
+    // Get a canvas ready
+
+    // Initalise arrays for the mean and error values of the fits for each radiation source
     double source_e_mean[source_e_true.size()];
     double source_e_error[source_e_true.size()];
 
+    // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0 ; i < source_e_true.size(); i++) {
         fit_peak_ge(h_data_calib, 0.975 * source_e_true[i], 1.025 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
         h_data_calib->GetYaxis()->SetTitle("Counts");
         h_data_calib->GetXaxis()->SetTitle("Energy [MeV]");
-        h_data_calib->Draw();
-        my_canvas->SaveAs(output_filename.c_str());
     }
+    return;
 
     std::vector<double> chi2_vec;
     std::vector<double> smeared_chi2_vec;
@@ -169,6 +180,7 @@ void fitter(std::string data_filename,
     int x_best[2] = {-1, -1};
     double p_best[2] = {0, 0};
 
+    // Loop over the energy range between x_min and x_max
     for (int x = x_min; x < x_max; x++) {
 
         TFile *file_mc = new TFile();
@@ -319,7 +331,7 @@ void fitter(std::string data_filename,
         TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[1]));
         TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[1]));
         t_etot->SetNDC();
-        t_printf->SetNDC();
+        t_p->SetNDC();
         t_chi2->SetNDC();
         t_etot->Draw();
         t_p->Draw();
@@ -329,7 +341,7 @@ void fitter(std::string data_filename,
         TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[0]));
         TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[0]));
         t_etot->SetNDC();
-        t_printf->SetNDC();
+        t_p->SetNDC();
         t_chi2->SetNDC();
         t_etot->Draw();
         t_p->Draw();
@@ -353,7 +365,7 @@ void fitter(std::string data_filename,
         ofs << p_best[0];
     }
     diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t";
-    diff_out << 0.001 * x_best[0] << "\t" << 0.001 * x_bestp[1] << "\t" << chi2[0] << std::endl;
+    diff_out << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
     for(int i = 0; i < source_e_true.size(); i++){
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];

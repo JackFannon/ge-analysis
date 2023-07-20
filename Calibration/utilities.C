@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include "../Fitter/headers.h"
+//#include "../Fitter/headers.h"
 
 void read_data_into_hist(std::string inputname, TH1D* hist){
      // Open the file input name and check that it has opened properly
@@ -93,11 +93,11 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     ge_fit->SetParameter(1, guess_mean);
     ge_fit->SetParameter(2, guess_sigma);
 
-    for (int i = 0; i < 10; i++) {
-        input_hist->Fit( "gauslin", "LIRQ");
+    for (int i = 0; i < 10; i++){
+        input_hist->Fit("gauslin", "LIRQ");
     }
 
-    input_hist->Fit( "gauslin", "LIR");
+    input_hist->Fit("gauslin", "LIR");
     double norm = ge_fit->GetParameter(0);
     guess_mean = ge_fit->GetParameter(1);
     guess_sigma = ge_fit->GetParameter(2);
