@@ -313,6 +313,35 @@ void fitter(std::string data_filename,
    std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
    std::cout << "Best fit momentum = " << p_best[1] << " (MeV)" <<  std::endl;
 
+   if(smear_flag){
+       TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[1]));
+       TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[1]));
+       TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[1]));
+       t_etot->SetNDC();
+       t_printf->SetNDC();
+       t_chi2->SetNDC();
+       t_etot->Draw();
+       t_p->Draw();
+       t_chi2->Draw();
+   } else{
+       TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[0]));
+       TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[0]));
+       TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[0]));
+       t_etot->SetNDC();
+       t_printf->SetNDC();
+       t_chi2->SetNDC();
+       t_etot->Draw();
+       t_p->Draw();
+       t_chi2->Draw();
+   }
+   TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
+   leg->SetFillColor(0);
+   leg->AddEntry(h_mc, "Default MC" , "l");
+   if(smear_flag){
+       leg->AddEntry(h_smc, "Smeared MC" , "l");
+   }
+   leg->Draw();
+
 
 
 
