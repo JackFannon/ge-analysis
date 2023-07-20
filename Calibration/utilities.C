@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
-//#include "../all_headers.h"
+#include "../Fitter/headers.h"
 
 void read_data_into_hist(std::string inputname, TH1D* hist){
      // Open the file input name and check that it has opened properly
