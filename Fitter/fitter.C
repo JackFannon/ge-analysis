@@ -1,4 +1,5 @@
 #include "../Calibration/utilities.C"
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -286,63 +287,78 @@ void fitter(std::string data_filename,
         my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[0]+200);
     }
 
-   my_graph_p->Draw("AL");
-   my_third_canvas->Print(output_filename.c_str());
+    my_graph_p->Draw("AL");
+    my_third_canvas->Print(output_filename.c_str());
 
-   TFile* file_mc = new TFile(mc_filename.c_str());
-   TH1F* h_mc = (TH1F*)file_mc->Get("h21");
-   TH1D* h_smc = new TH1D("smearing", "smearing", nbins, e_min, e_max);
-   int bin_min = h_mc->FindBin(fit_e_min) - 20;
-   int bin_max = h_mc->FindBin(fit_e_max) + 10;
+    TFile* file_mc = new TFile(mc_filename.c_str());
+    TH1F* h_mc = (TH1F*)file_mc->Get("h21");
+    TH1D* h_smc = new TH1D("smearing", "smearing", nbins, e_min, e_max);
+    int bin_min = h_mc->FindBin(fit_e_min) - 20;
+    int bin_max = h_mc->FindBin(fit_e_max) + 10;
 
-   for(int i = bin_min; i < bin_max; i++){
-       int mc_entry_bin = h_mc->GetBinContent(i+1);
-       for(int j = 0; j < 2000; j++){
-           double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), source_e_error[2]);
-           double sf = double(mc_entry_bin)/2000.0;
-           h_smc->Fill(random, sf);
-       }
-   }
+    for(int i = bin_min; i < bin_max; i++){
+        int mc_entry_bin = h_mc->GetBinContent(i+1);
+        for(int j = 0; j < 2000; j++){
+            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), source_e_error[2]);
+            double sf = double(mc_entry_bin)/2000.0;
+            h_smc->Fill(random, sf);
+        }
+    }
 
-   std::vector<float> chi2;
+    std::vector<float> chi2;
 
-   chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, false));
-   chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, true));
-   std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
-   std::cout << "Best fit momentum = " << p_best[0] << " (MeV)" <<  std::endl;
-   std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
-   std::cout << "Best fit momentum = " << p_best[1] << " (MeV)" <<  std::endl;
+    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, false));
+    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, true));
+    std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
+    std::cout << "Best fit momentum = " << p_best[0] << " (MeV)" <<  std::endl;
+    std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
+    std::cout << "Best fit momentum = " << p_best[1] << " (MeV)" <<  std::endl;
 
-   if(smear_flag){
-       TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[1]));
-       TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[1]));
-       TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[1]));
-       t_etot->SetNDC();
-       t_printf->SetNDC();
-       t_chi2->SetNDC();
-       t_etot->Draw();
-       t_p->Draw();
-       t_chi2->Draw();
-   } else{
-       TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[0]));
-       TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[0]));
-       TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[0]));
-       t_etot->SetNDC();
-       t_printf->SetNDC();
-       t_chi2->SetNDC();
-       t_etot->Draw();
-       t_p->Draw();
-       t_chi2->Draw();
-   }
-   TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
-   leg->SetFillColor(0);
-   leg->AddEntry(h_mc, "Default MC" , "l");
-   if(smear_flag){
-       leg->AddEntry(h_smc, "Smeared MC" , "l");
-   }
-   leg->Draw();
+    if(smear_flag){
+        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[1]));
+        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[1]));
+        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[1]));
+        t_etot->SetNDC();
+        t_printf->SetNDC();
+        t_chi2->SetNDC();
+        t_etot->Draw();
+        t_p->Draw();
+        t_chi2->Draw();
+    } else{
+        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[0]));
+        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[0]));
+        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[0]));
+        t_etot->SetNDC();
+        t_printf->SetNDC();
+        t_chi2->SetNDC();
+        t_etot->Draw();
+        t_p->Draw();
+        t_chi2->Draw();
+    }
+    TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
+    leg->SetFillColor(0);
+    leg->AddEntry(h_mc, "Default MC" , "l");
+    if(smear_flag){
+        leg->AddEntry(h_smc, "Smeared MC" , "l");
+    }
+    leg->Draw();
 
+    my_canvas->SaveAs(output_filename.c_str());
 
+    std::ofstream ofs("bestfit_momentum_tmp.txt");
+    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
+    if(smear_flag){
+        ofs << p_best[1];
+    }else{
+        ofs << p_best[0];
+    }
+    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t";
+    diff_out << 0.001 * x_best[0] << "\t" << 0.001 * x_bestp[1] << "\t" << chi2[0] << std::endl;
 
-
+    for(int i = 0; i < source_e_true.size(); i++){
+        ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
+    }
+    ofs << endl;
+    ofs.close();
+    diff_out.close();
 }
