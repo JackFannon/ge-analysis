@@ -119,6 +119,25 @@ float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plo
     return chi2;
 }
 
+TH1D* apply_calibration(std::string raw_data_filename){
+    // Histogram for raw data
+    TH1D* h_data_raw = new TH1D("h_data", "h_data", nbins, 0, nbins);
+
+    // Histogram for the data once Ni calibration has been applied
+    TH1D* h_data_calib = new TH1D("h_calib", "h_calib", nbins, e_min, e_max);
+
+    // Fill a histogram with the channel counts
+    read_data_into_hist(raw_data_filename, h_data_raw);
+
+    // Set the bin content of calibrated histogram
+    for (int bin = 0; bin < nbins; bin++) {
+        h_data_calib->SetBinContent(bin + 1, h_data_raw->GetBinContent(bin + 1));
+        h_data_calib->SetBinError(bin + 1, sqrt(h_data_raw->GetBinContent(bin + 1)));
+    }
+
+    return h_data_calib;
+}
+
 void fitter(std::string data_filename,
             int data_type,
             int x_min,
@@ -130,7 +149,6 @@ void fitter(std::string data_filename,
             std::string xpos,
             std::string zpos){
 
-    std::cout << "e_min: " << e_min << " e_max: " << e_max << std::endl;
     // Set drawing options using utilities function
     set_style(132);
 
