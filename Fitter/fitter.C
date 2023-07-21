@@ -135,7 +135,63 @@ TH1D* apply_calibration(std::string raw_data_filename){
         h_data_calib->SetBinError(bin + 1, sqrt(h_data_raw->GetBinContent(bin + 1)));
     }
 
+    h_data_calib->GetYaxis()->SetTitle("Counts");
+    h_data_calib->GetXaxis()->SetTitle("Energy [MeV]");
+
     return h_data_calib;
+}
+
+void setup_legend(TLegend* leg, TH1F* h_mc, bool smear_flag){
+    leg->SetFillColor(0);
+    leg->AddEntry(h_mc, "Default MC" , "1");
+    if(smear_flag){
+        leg->AddEntry(h_smc, "Smeared MC" , "1");
+    }
+
+    if(smear_flag) {
+        TLatex* t_etot = new TLatex(0.15, 0.8, Form("E_{tot} = %4.3f MeV", etot));
+        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV", p));
+        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f", chi2[1]));
+        t_etot->SetNDC();
+        t_p->SetNDC();
+        t_chi2->SetNDC();
+        t_etot->Draw();
+        t_p->Draw();
+        t_chi2->Draw();
+    }else{
+        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",etot));
+        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p));
+        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2[0]));
+        t_etot->SetNDC();
+        t_p->SetNDC();
+        t_chi2->SetNDC();
+        t_etot->Draw();
+        t_p->Draw();
+        t_chi2->Draw();
+    }
+}
+
+TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size()]){
+    // Intialise histogram to store smeared MC
+    TH1F* h_mc_smeared = new TH1F("smeared_mc", "smeared_mc", nbins, e_min, e_max);
+
+    // Find the maximum and minimum bin numbers where there will be data
+    int bin_min = h_mc->FindBin(fit_e_min);
+    int bin_max = h_mc->FindBin(fit_e_max);
+
+    // Create integer to hold MC bin content before smearing
+    int mc_entry_bin = 0;
+
+    // Loop over bins and smear with a gaussian
+    for(int i = bin_min; i < bin_max; i++){
+        mc_entry_bin = h_mc->GetBinContent(i + 1);
+        for (int j = 0; j < 200; j++) {
+            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), uncertainty);
+            double smearing_factor = double(mc_entry_bin) / 200.0;
+            h_mc_smeared->Fill(random, smearing_factor);
+        }
+    }
+    return h_mc_smeared;
 }
 
 void fitter(std::string data_filename,
@@ -152,29 +208,6 @@ void fitter(std::string data_filename,
     // Set drawing options using utilities function
     set_style(132);
 
-    // Initialise the histogram for channel counts
-    TH1D* h_data_raw = new TH1D("h_data", "h_data", nbins, 0, nbins);
-
-    // Read the raw channel and hits data in to the histogram
-    read_data_into_hist(data_filename, h_data_raw);
-
-    // Initialise a histogram for the calibrated data. Note the binning here is shifted
-    //   using the calibration values defined above.
-    TH1D* h_data_calib = new TH1D("", "", nbins, e_min, e_max);
-
-    // Set the bin content of the calibrated histogram to the same as the bin of the raw data
-    for (int bin = 0; bin < nbins; bin++) {
-        h_data_calib->SetBinContent(bin + 1, h_data_raw->GetBinContent(bin+1));
-        h_data_calib->SetBinError(bin + 1, sqrt(h_data_raw->GetBinContent(bin + 1)));
-    }
-
-    TCanvas* my_canvas = new TCanvas("c1", "c1");
-    h_data_calib->Draw();
-
-    my_canvas->Print(output_filename.c_str());
-
-    // Get a canvas ready
-
     // Initalise arrays for the mean and error values of the fits for each radiation source
     double source_e_mean[source_e_true.size()];
     double source_e_error[source_e_true.size()];
@@ -182,8 +215,6 @@ void fitter(std::string data_filename,
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0 ; i < source_e_true.size(); i++) {
         fit_peak_ge(h_data_calib, 0.975 * source_e_true[i], 1.025 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
-        h_data_calib->GetYaxis()->SetTitle("Counts");
-        h_data_calib->GetXaxis()->SetTitle("Energy [MeV]");
     }
     return;
 
@@ -201,67 +232,39 @@ void fitter(std::string data_filename,
     // Loop over the energy range between x_min and x_max
     for (int x = x_min; x < x_max; x++) {
 
-        TFile *file_mc = new TFile();
-        file_mc->Open(mc_filename.c_str());
-
-        TH1F *h_mc = (TH1F*)file_mc->Get("h21");
-
-        int mc_entry_bin = 0;
-        TH1D *h_smc = new TH1D("smeared", "smeared", nbins, e_min, e_max);
-
         int bin_min = h_mc->FindBin(fit_e_min) - 20;
         int bin_max = h_mc->FindBin(fit_e_max) + 10;
 
-        for (int i = bin_min; i < bin_max; i++) {
-            mc_entry_bin = h_mc->GetBinContent(i + 1);
-            for (int j = 0; j < 200; j++) {
-                double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i + 1),
-                                        source_e_error[2]);
-                double sf = double(mc_entry_bin) / 200.0;
-                h_smc->Fill(random, sf);
-            }
-        }
+        // TFile for the MC root file
+        TFile* mc_file = new TFile();
 
+        // Open the root file
+        mc_file->Open(mc_filename.c_str());
+
+        // Get the histogram of total energy deposition in the Ge detector from the MC file
+        TH1F* h_mc = (TH1F*)mc_file->Get("h21");
+
+        // Smear the MC histogram
+        TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error);
+
+        // Energy in MeV
         double etot = 0.001 * (double)x;
+
+        // Momentum conversion
         double p = sqrt(pow(etot, 2) - pow(0.511, 2));
 
+        // Calculate how well the MC compares to the data
         std::vector<float> chi2;
         chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, false));
         chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, true));
 
+        // Draw the legend and save the canvas
         TLegend* leg = new TLegend(0.15, 0.4, 0.35, 0.55);
-        leg->SetFillColor(0);
-        leg->AddEntry(h_mc, "Default MC" , "1");
-        if(smear_flag){
-            leg->AddEntry(h_smc, "Smeared MC" , "1");
-        }
-
-        if(smear_flag) {
-            TLatex* t_etot = new TLatex(0.15, 0.8, Form("E_{tot} = %4.3f MeV", etot));
-            TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV", p));
-            TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f", chi2[1]));
-            t_etot->SetNDC();
-            t_p->SetNDC();
-            t_chi2->SetNDC();
-            t_etot->Draw();
-            t_p->Draw();
-            t_chi2->Draw();
-        }else{
-            TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",etot));
-            TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p));
-            TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2[0]));
-            t_etot->SetNDC();
-            t_p->SetNDC();
-            t_chi2->SetNDC();
-            t_etot->Draw();
-            t_p->Draw();
-            t_chi2->Draw();
-        }
+        setup_legend(leg, h_mc, smear_flag);
         leg->Draw();
-
         my_canvas->SaveAs(output_filename.c_str());
-
         std::cout << x << " " << chi2[0] << " " << chi2[1] << std::endl;
+
 
         x_vec.push_back((double)x);
         p_vec.push_back((Double_t)p);
