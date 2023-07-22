@@ -20,36 +20,38 @@ const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
 
 const std::string mc_filename = "13040.root";
-
-float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plot_flag = false, TH1D * h_smc = new TH1D("", "", 100, 0, 100), bool flag = false){
+float calc_chi2(TH1D* h_data, TH1f* h_mc, double e_min, double e_max, bool plot_flag = false){
+    // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
     int bin_max = h_data->FindBin(e_max);
+
+    // Print out bin and energy values
     std::cout << "================ " << e_min << " " << e_max << " " << bin_min << " " << bin_max << std::endl;
+
+    // Get the integral where the peak should be to normalise
     double norm_data = h_data->Integral(bin_min,bin_max);
     double norm_mc = h_mc->Integral(bin_min,bin_max);
-    double norm_smc = h_smc->Integral(bin_min,bin_max);
-    // consistency check:
+
+    // Check that axes are consistent
     double xmax_data = h_data->GetXaxis()->GetXmax();
     double xmax_mc = h_mc->GetXaxis()->GetXmax();
     std::cout << "consistency check: " << xmax_data << " " << xmax_mc << std::endl;
-    std::cout << "consistency check: " << h_data->GetXaxis()->GetXmin() << " "
-         << h_mc->GetXaxis()->GetXmin() << std::endl;
+    std::cout << "consistency check: " << h_data->GetXaxis()->GetXmin() << " " << h_mc->GetXaxis()->GetXmin() << std::endl;
 
     double hist_x_min = e_min - 0.1;
     double hist_x_max = e_max + 0.05;
 
-
     double chi2 = 0;
     double n_data = 0;
     double n_mc = 0;
-    double n_smc = 0;
     double err_data = 0;
     double err_mc = 0;
-    double err_smc = 0;
 
     int ndf = 0;
 
     TCanvas* c1 = new TCanvas("", "");
+
+    // Loop over the bins and calculate the chi2 between the data and MC
     for (int i = bin_min; i <= bin_max; i++){
         n_data = h_data->GetBinContent(i);
         if (n_data == 0){
@@ -58,20 +60,14 @@ float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plo
         err_data = sqrt(n_data);
         n_mc = h_mc->GetBinContent(i) * norm_data / norm_mc;
         err_mc =  sqrt(h_mc->GetBinContent(i)) * norm_data / norm_mc;
-        n_smc = h_smc->GetBinContent(i) * norm_data / norm_smc;
-        err_smc =  sqrt(h_smc->GetBinContent(i)) * norm_data / norm_smc;
-        if(flag){
-            chi2 += pow(n_data - n_smc,2) / (err_data*err_data + err_smc*err_smc);
-        }else{
-            chi2 += pow(n_data - n_mc,2) / (err_data*err_data + err_mc*err_mc);
-        }
+        chi2 += pow(n_data - n_mc,2) / (err_data*err_data + err_mc*err_mc);
         ndf++;
-        //    std::cout << i << " " << n_data << " " << n_mc << std::endl;
     }
+
     int max_bin_mc = h_mc -> GetMaximumBin();
     double scalefactor;
-    //h_smc -> Scale(scalefactor);
 
+    // Plotting
     std::string dummy;
     if (plot_flag){
         int nbins = h_mc->GetNbinsX();
@@ -80,9 +76,6 @@ float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plo
             err_mc =  sqrt(h_mc->GetBinContent(i+1)) * norm_data / norm_mc;
             h_mc->SetBinContent(i+1, n_mc);
             h_mc->SetBinError(i+1, err_mc);
-            n_smc = h_smc -> GetBinContent(i+1) * norm_data / norm_smc;
-            err_smc = sqrt(h_smc->GetBinContent(i+1)) * norm_data / norm_smc;
-            h_smc -> SetBinContent(i+1, n_smc);
         }
         c1->cd();
         h_data->GetXaxis()->SetRangeUser(hist_x_min,hist_x_max);
@@ -92,17 +85,11 @@ float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plo
         //h_mc->GetYaxis()->SetRangeUser(0,1.1 * h_data->GetMaximum());
         h_mc->SetLineColor(2);
         h_mc->SetLineWidth(2);
-        h_smc->SetLineColor(3);
-        h_smc->SetLineWidth(2);
         h_data->SetLineWidth(2);
         h_data->SetLineColor(1);
         h_data->Draw("e");
         h_mc->Draw("hist same");
-        if(flag){
-            h_smc->Draw("hist same");
-        }
         h_data->Draw("e same");
-
         TLine * l1 = new TLine(e_min,0,e_min,h_mc->GetMaximum());
         TLine * l2 = new TLine(e_max,0,e_max,h_mc->GetMaximum());
         l1->SetLineColor(4);
@@ -111,7 +98,6 @@ float calc_chi2(TH1D * h_data, TH1F * h_mc, double e_min, double e_max, bool plo
         l2->SetLineWidth(2);
         l1->Draw();
         l2->Draw();
-
         c1->Update();
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf-1 << std::endl;
     }
@@ -255,8 +241,8 @@ void fitter(std::string data_filename,
 
         // Calculate how well the MC compares to the data
         std::vector<float> chi2;
-        chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, false));
-        chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, true));
+        chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
+        chi2.push_back(calc_chi2(h_data_calib, h_mc_smeared, fit_e_min, fit_e_max, true));
 
         // Draw the legend and save the canvas
         TLegend* leg = new TLegend(0.15, 0.4, 0.35, 0.55);
@@ -265,25 +251,32 @@ void fitter(std::string data_filename,
         my_canvas->SaveAs(output_filename.c_str());
         std::cout << x << " " << chi2[0] << " " << chi2[1] << std::endl;
 
-
+        // Push back the energy and momenta into a vector (?)
+        //   not sure why this is done
         x_vec.push_back((double)x);
         p_vec.push_back((Double_t)p);
 
-
+        // Push back the chi2 value for each case, smeared and not smeared into the
+        //   corresponding vectors
         chi2_vec.push_back(chi2[0]);
         smeared_chi2_vec.push_back(chi2[1]);
+
+        // Use the smallest chi2 value to define the best energy/momenta match
         if (chi2[0] < chi2_min[0]){
             chi2_min[0] = chi2[0];
             x_best[0] = x;
             p_best[0] = p;
         }
+        // Do the same for the smeared case
         if (chi2[1] < chi2_min[1]){
             chi2_min[1] = chi2[1];
             x_best[1] = x;
             p_best[1] = p;
         }
+        // Close the file
         file_mc->Close();
     }
+
 
     TCanvas* my_other_canvas = new TCanvas("c2", "c2", 600, 600);
     TGraph* my_graph = new TGraph(chi2_vec.size(), &x_vec[0], &smeared_chi2_vec[0]);
@@ -324,24 +317,10 @@ void fitter(std::string data_filename,
     my_third_canvas->Print(output_filename.c_str());
 
     TFile* file_mc = new TFile(mc_filename.c_str());
-    TH1F* h_mc = (TH1F*)file_mc->Get("h21");
     TH1D* h_smc = new TH1D("smearing", "smearing", nbins, e_min, e_max);
     int bin_min = h_mc->FindBin(fit_e_min) - 20;
     int bin_max = h_mc->FindBin(fit_e_max) + 10;
 
-    for(int i = bin_min; i < bin_max; i++){
-        int mc_entry_bin = h_mc->GetBinContent(i+1);
-        for(int j = 0; j < 2000; j++){
-            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), source_e_error[2]);
-            double sf = double(mc_entry_bin)/2000.0;
-            h_smc->Fill(random, sf);
-        }
-    }
-
-    std::vector<float> chi2;
-
-    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, false));
-    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true, h_smc, true));
     std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
     std::cout << "Best fit momentum = " << p_best[0] << " (MeV)" <<  std::endl;
     std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
