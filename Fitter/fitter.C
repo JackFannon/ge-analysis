@@ -36,6 +36,10 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
     double norm_data = h_data->Integral(bin_min,bin_max);
     double norm_mc = h_mc->Integral(bin_min,bin_max);
 
+    std::cout << norm_mc << std::endl;
+
+
+
     // Check that axes are consistent
     double xmax_data = h_data->GetXaxis()->GetXmax();
     double xmax_mc = h_mc->GetXaxis()->GetXmax();
@@ -293,47 +297,47 @@ void fitter(std::string data_filename,
     TCanvas* my_other_canvas = new TCanvas("c2", "c2", 600, 600);
     TGraph* my_graph = new TGraph(chi2_vec.size(), &x_vec[0], &smeared_chi2_vec[0]);
 
-    // if(smear_flag){
-    //     my_graph->GetXaxis()->SetRangeUser(x_best[1] - 15, x_best[1] + 15);
-    //     my_graph->GetYaxis()->SetRangeUser(0, chi2_min[1] + 200);
-    // }else{
-    //     my_graph->GetXaxis()->SetRangeUser(x_best[0] - 15, x_best[0] + 15);
-    //     my_graph->GetYaxis()->SetRangeUser(0, chi2_min[0] + 200);
-    // }
+    if(smear_flag){
+        my_graph->GetXaxis()->SetRangeUser(x_best[1] - 15, x_best[1] + 15);
+        my_graph->GetYaxis()->SetRangeUser(0, chi2_min[1] + 200);
+    }else{
+        my_graph->GetXaxis()->SetRangeUser(x_best[0] - 15, x_best[0] + 15);
+        my_graph->GetYaxis()->SetRangeUser(0, chi2_min[0] + 200);
+    }
 
-    // my_graph->SetTitle(";Total energy (keV);#chi^{2}");
-    // my_graph->Draw("AL");
-    // my_other_canvas->SaveAs(("2" + output_filename).c_str());
+    my_graph->SetTitle(";Total energy (keV);#chi^{2}");
+    my_graph->Draw("AL");
+    my_other_canvas->SaveAs(("2" + output_filename).c_str());
 
-    // TCanvas* my_third_canvas = new TCanvas("c3", "c3", 600, 600);
-    // TGraph* my_graph_p;
-    // if(smear_flag){
-    //     my_graph_p = new TGraph(smeared_chi2_vec.size(), &p_vec[0], &smeared_chi2_vec[0]);
-    // }else{
-    //     my_graph_p = new TGraph(chi2_vec.size(), &p_vec[0], &chi2_vec[0]);
-    // }
+    TCanvas* my_third_canvas = new TCanvas("c3", "c3", 600, 600);
+    TGraph* my_graph_p;
+    if(smear_flag){
+        my_graph_p = new TGraph(smeared_chi2_vec.size(), &p_vec[0], &smeared_chi2_vec[0]);
+    }else{
+        my_graph_p = new TGraph(chi2_vec.size(), &p_vec[0], &chi2_vec[0]);
+    }
 
-    // my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
-    // my_graph_p->Draw("AL");
-    // my_third_canvas->SaveAs(("3" + output_filename).c_str());
+    my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
+    my_graph_p->Draw("AL");
+    my_third_canvas->SaveAs(("3" + output_filename).c_str());
 
-    // // if(smear_flag){
-    // //     my_graph_p->GetXaxis()->SetRangeUser(p_best[1]-0.015,p_best[1]+0.015);
-    // //     my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[1]+200);
-    // // }else{
-    // //     my_graph_p->GetXaxis()->SetRangeUser(p_best[0]-0.015,p_best[0]+0.015);
-    // //     my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[0]+200);
-    // }
+    if(smear_flag){
+        my_graph_p->GetXaxis()->SetRangeUser(p_best[1]-0.015,p_best[1]+0.015);
+        my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[1]+200);
+    }else{
+        my_graph_p->GetXaxis()->SetRangeUser(p_best[0]-0.015,p_best[0]+0.015);
+        my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[0]+200);
+    }
 
-    // my_graph_p->Draw("AL");
-    // my_third_canvas->Print(output_filename.c_str());
+    my_graph_p->Draw("AL");
+    my_third_canvas->Print(output_filename.c_str());
 
-    // TH1F* h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
+    TH1F* h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
 
-    // chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
-    // if (smear_flag) {
-    //     chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, true));
-    // }
+    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
+    if (smear_flag) {
+        chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, true));
+    }
 
 
     std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
@@ -343,35 +347,35 @@ void fitter(std::string data_filename,
         std::cout << "Best fit momentum = "     << p_best[1] << " (MeV)" <<  std::endl;
     }
 
-    // TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
+    TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
 
-    // setup_legend(leg, h_mc, "Default MC", x_best[0], p_best[0], chi2_min[0]);
-    // if(smear_flag){
-    //     setup_legend(leg, h_smc, "Smeared MC", x_best[1], p_best[1], chi2_min[1]);
-    // }
-    // leg->SetFillColor(0);
-    // leg->Draw();
+    setup_legend(leg, h_mc, "Default MC", x_best[0], p_best[0], chi2_min[0]);
+    if(smear_flag){
+        setup_legend(leg, h_smc, "Smeared MC", x_best[1], p_best[1], chi2_min[1]);
+    }
+    leg->SetFillColor(0);
+    leg->Draw();
 
 
-    // std::cout << "Saving canvas to: " << output_filename << std::endl;
-    // my_canvas->SaveAs(("1"+output_filename).c_str());
-    // std::ofstream ofs("bestfit_momentum_tmp.txt");
-    // std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
-    // if(smear_flag){
-    //     ofs << p_best[1];
-    // }else{
-    //     ofs << p_best[0];
-    // }
+    std::cout << "Saving canvas to: " << output_filename << std::endl;
+    my_canvas->SaveAs(("1"+output_filename).c_str());
+    std::ofstream ofs("bestfit_momentum_tmp.txt");
+    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
+    if(smear_flag){
+        ofs << p_best[1];
+    }else{
+        ofs << p_best[0];
+    }
 
-    // std::cout << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
+    std::cout << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
-    // diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
+    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
-    // for(int i = 0; i < source_e_true.size(); i++){
-    //     ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
-    // }
-    // ofs << endl;
-    // ofs.close();
-    // diff_out.close();
+    for(int i = 0; i < source_e_true.size(); i++){
+        ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
+    }
+    ofs << endl;
+    ofs.close();
+    diff_out.close();
     file_mc->Close();
 }
