@@ -5,7 +5,7 @@
 #include <vector>
 //#include "../Fitter/headers.h"
 
-void read_data_into_hist(std::string inputname, TH1D* hist){
+void read_data_into_hist(std::string inputname, TH1F* hist){
      // Open the file input name and check that it has opened properly
     std::ifstream input_data;
     input_data.open(inputname.c_str());
@@ -76,16 +76,18 @@ void set_style(int fontid){
     return;
 }
 
-void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double* mean, double* error){
+void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double* mean, double* error){
 
     // Initialise the fit
     TF1* ge_fit = new TF1("gauslin", "gaus(0) + pol1(3)", search_min, search_max);
     ge_fit->SetParLimits(0, 0., pow(10., 6));
     ge_fit->SetParLimits(2, .1, 10.);
     ge_fit->SetParameter(0, 100.);
+    //ge_fit->SetRange(search_min, search_max);
+
+    input_hist->SetAxisRange(search_min, search_max);
 
     // Make a first guess
-    input_hist->SetAxisRange(search_min, search_max);
     double guess_mean = input_hist->GetMean();
     double guess_sigma = input_hist->GetRMS();
 
@@ -106,7 +108,7 @@ void fit_peak_ge(TH1D* input_hist, double search_min, double search_max, double*
     *error = guess_sigma;
 }
 
-TH1D* plot_channel_hist(std::string inputFile, std::string directory){
+TH1F* plot_channel_hist(std::string inputFile, std::string directory){
     // Open the file input name and check that it has opened properly
     std::ifstream input_data;
     input_data.open(directory + inputFile.c_str());
@@ -118,7 +120,7 @@ TH1D* plot_channel_hist(std::string inputFile, std::string directory){
 
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
-    TH1D* hist = new TH1D(inputFile.c_str(), inputFile.c_str(), 4096, 0, 4096);
+    TH1F* hist = new TH1F(inputFile.c_str(), inputFile.c_str(), 4096, 0, 4096);
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 

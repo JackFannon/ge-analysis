@@ -19,11 +19,16 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
 
-const std::string mc_filename = "13040.root";
-float calc_chi2(TH1D* h_data, TH1f* h_mc, double e_min, double e_max, bool plot_flag = false){
+const std::string mc_filename = "12960.root";
+
+
+float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_flag = false){
     // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
     int bin_max = h_data->FindBin(e_max);
+
+    std::cout << " DATA BIN MIN " << bin_min << std::endl;
+    std::cout << " MC BIN MIN " << h_mc->FindBin(e_min);
 
     // Print out bin and energy values
     std::cout << "================ " << e_min << " " << e_max << " " << bin_min << " " << bin_max << std::endl;
@@ -41,7 +46,7 @@ float calc_chi2(TH1D* h_data, TH1f* h_mc, double e_min, double e_max, bool plot_
     double hist_x_min = e_min - 0.1;
     double hist_x_max = e_max + 0.05;
 
-    double chi2 = 0;
+    float chi2 = 0;
     double n_data = 0;
     double n_mc = 0;
     double err_data = 0;
@@ -63,6 +68,8 @@ float calc_chi2(TH1D* h_data, TH1f* h_mc, double e_min, double e_max, bool plot_
         chi2 += pow(n_data - n_mc,2) / (err_data*err_data + err_mc*err_mc);
         ndf++;
     }
+
+    std::cout << "CHI2 ================= " << chi2 << std::endl;
 
     int max_bin_mc = h_mc -> GetMaximumBin();
     double scalefactor;
@@ -102,15 +109,18 @@ float calc_chi2(TH1D* h_data, TH1f* h_mc, double e_min, double e_max, bool plot_
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf-1 << std::endl;
     }
 
+    c1->SaveAs("new.ps");
+    std::cout << std::endl;
+
     return chi2;
 }
 
-TH1D* apply_calibration(std::string raw_data_filename){
+TH1F* apply_calibration(std::string raw_data_filename){
     // Histogram for raw data
-    TH1D* h_data_raw = new TH1D("h_data", "h_data", nbins, 0, nbins);
+    TH1F* h_data_raw = new TH1F("h_data", "h_data", nbins, 0, nbins);
 
     // Histogram for the data once Ni calibration has been applied
-    TH1D* h_data_calib = new TH1D("h_calib", "h_calib", nbins, e_min, e_max);
+    TH1F* h_data_calib = new TH1F("h_calib", "h_calib", nbins, e_min, e_max);
 
     // Fill a histogram with the channel counts
     read_data_into_hist(raw_data_filename, h_data_raw);
@@ -127,37 +137,21 @@ TH1D* apply_calibration(std::string raw_data_filename){
     return h_data_calib;
 }
 
-void setup_legend(TLegend* leg, TH1F* h_mc, bool smear_flag){
+void setup_legend(TLegend* leg, TH1F* input_hist, std::string legend_label, double energy, double momentum, float chi2){
     leg->SetFillColor(0);
-    leg->AddEntry(h_mc, "Default MC" , "1");
-    if(smear_flag){
-        leg->AddEntry(h_smc, "Smeared MC" , "1");
-    }
-
-    if(smear_flag) {
-        TLatex* t_etot = new TLatex(0.15, 0.8, Form("E_{tot} = %4.3f MeV", etot));
-        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV", p));
-        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f", chi2[1]));
-        t_etot->SetNDC();
-        t_p->SetNDC();
-        t_chi2->SetNDC();
-        t_etot->Draw();
-        t_p->Draw();
-        t_chi2->Draw();
-    }else{
-        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",etot));
-        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p));
-        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2[0]));
-        t_etot->SetNDC();
-        t_p->SetNDC();
-        t_chi2->SetNDC();
-        t_etot->Draw();
-        t_p->Draw();
-        t_chi2->Draw();
-    }
+    leg->AddEntry(input_hist, legend_label.c_str(), "1");
+    TLatex* energy_label = new TLatex(0.15, 0.8, Form("E_{tot} = %4.3f MeV", energy));
+    TText* momentum_label = new TText (0.15, 0.7, Form("P = %4.3f MeV", momentum));
+    TLatex* chi2_label = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f", chi2));
+    energy_label->SetNDC();
+    momentum_label->SetNDC();
+    chi2_label->SetNDC();
+    energy_label->Draw();
+    momentum_label->Draw();
+    chi2_label->Draw();
 }
 
-TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size()]){
+TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size()], double fit_e_min, double fit_e_max){
     // Intialise histogram to store smeared MC
     TH1F* h_mc_smeared = new TH1F("smeared_mc", "smeared_mc", nbins, e_min, e_max);
 
@@ -172,7 +166,7 @@ TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size(
     for(int i = bin_min; i < bin_max; i++){
         mc_entry_bin = h_mc->GetBinContent(i + 1);
         for (int j = 0; j < 200; j++) {
-            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), uncertainty);
+            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), source_e_error[2]);
             double smearing_factor = double(mc_entry_bin) / 200.0;
             h_mc_smeared->Fill(random, smearing_factor);
         }
@@ -191,6 +185,12 @@ void fitter(std::string data_filename,
             std::string xpos,
             std::string zpos){
 
+
+
+    std::vector<float> chi2;
+
+    TCanvas* my_canvas = new TCanvas("my_canvas", "my_canvas", 600, 600);
+
     // Set drawing options using utilities function
     set_style(132);
 
@@ -198,11 +198,13 @@ void fitter(std::string data_filename,
     double source_e_mean[source_e_true.size()];
     double source_e_error[source_e_true.size()];
 
+    TH1F* h_data_calib = apply_calibration(data_filename);
+
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0 ; i < source_e_true.size(); i++) {
         fit_peak_ge(h_data_calib, 0.975 * source_e_true[i], 1.025 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
     }
-    return;
+
 
     std::vector<double> chi2_vec;
     std::vector<double> smeared_chi2_vec;
@@ -218,20 +220,17 @@ void fitter(std::string data_filename,
     // Loop over the energy range between x_min and x_max
     for (int x = x_min; x < x_max; x++) {
 
-        int bin_min = h_mc->FindBin(fit_e_min) - 20;
-        int bin_max = h_mc->FindBin(fit_e_max) + 10;
+        // Open MC file
+        std::string mc_filename = "../MC/" + std::to_string(x) + ".root";
 
         // TFile for the MC root file
-        TFile* mc_file = new TFile();
-
-        // Open the root file
-        mc_file->Open(mc_filename.c_str());
+        TFile* mc_file = new TFile(mc_filename.c_str(), "READ");
 
         // Get the histogram of total energy deposition in the Ge detector from the MC file
-        TH1F* h_mc = (TH1F*)mc_file->Get("h21");
+        TH1F* h_mc = dynamic_cast<TH1F*>(mc_file->Get("h21"));
 
         // Smear the MC histogram
-        TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error);
+        TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max);
 
         // Energy in MeV
         double etot = 0.001 * (double)x;
@@ -240,32 +239,34 @@ void fitter(std::string data_filename,
         double p = sqrt(pow(etot, 2) - pow(0.511, 2));
 
         // Calculate how well the MC compares to the data
-        std::vector<float> chi2;
         chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
-        chi2.push_back(calc_chi2(h_data_calib, h_mc_smeared, fit_e_min, fit_e_max, true));
+        if (smear_flag) {
+            chi2.push_back(calc_chi2(h_data_calib, h_mc_smeared, fit_e_min, fit_e_max, true));
+        }
 
         // Draw the legend and save the canvas
         TLegend* leg = new TLegend(0.15, 0.4, 0.35, 0.55);
-        setup_legend(leg, h_mc, smear_flag);
-        leg->Draw();
-        my_canvas->SaveAs(output_filename.c_str());
-        std::cout << x << " " << chi2[0] << " " << chi2[1] << std::endl;
+
+        setup_legend(leg, h_mc, "Default MC", etot, p, chi2[0]);
+        if (smear_flag){
+            setup_legend(leg, h_mc_smeared, "Smeared MC", etot, p, chi2[1]);
+        }
 
         // Push back the energy and momenta into a vector (?)
         //   not sure why this is done
         x_vec.push_back((double)x);
-        p_vec.push_back((Double_t)p);
+        p_vec.push_back((double)p);
 
         // Push back the chi2 value for each case, smeared and not smeared into the
         //   corresponding vectors
         chi2_vec.push_back(chi2[0]);
         smeared_chi2_vec.push_back(chi2[1]);
-
         // Use the smallest chi2 value to define the best energy/momenta match
         if (chi2[0] < chi2_min[0]){
             chi2_min[0] = chi2[0];
             x_best[0] = x;
             p_best[0] = p;
+            std::cout << "X BEST IS HERE" << x << std::endl;
         }
         // Do the same for the smeared case
         if (chi2[1] < chi2_min[1]){
@@ -273,10 +274,19 @@ void fitter(std::string data_filename,
             x_best[1] = x;
             p_best[1] = p;
         }
+
+        // Remove all entries from the chi2 vector
+        chi2.clear();
+
         // Close the file
-        file_mc->Close();
+        mc_file->Close();
     }
 
+    // TFile for the MC root file
+    TFile* file_mc = new TFile(("../MC/" + std::to_string(x_best[0]) + ".root").c_str(), "READ");
+
+    // Get the histogram of total energy deposition in the Ge detector from the MC file
+    TH1F* h_mc = dynamic_cast<TH1F*>(file_mc->Get("h21"));
 
     TCanvas* my_other_canvas = new TCanvas("c2", "c2", 600, 600);
     TGraph* my_graph = new TGraph(chi2_vec.size(), &x_vec[0], &smeared_chi2_vec[0]);
@@ -291,7 +301,7 @@ void fitter(std::string data_filename,
 
     my_graph->SetTitle(";Total energy (keV);#chi^{2}");
     my_graph->Draw("AL");
-    my_other_canvas->SaveAs(output_filename.c_str());
+    my_other_canvas->SaveAs(("2" + output_filename).c_str());
 
     TCanvas* my_third_canvas = new TCanvas("c3", "c3", 600, 600);
     TGraph* my_graph_p;
@@ -303,7 +313,7 @@ void fitter(std::string data_filename,
 
     my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
     my_graph_p->Draw("AL");
-    my_third_canvas->SaveAs(output_filename.c_str());
+    my_third_canvas->SaveAs(("3" + output_filename).c_str());
 
     if(smear_flag){
         my_graph_p->GetXaxis()->SetRangeUser(p_best[1]-0.015,p_best[1]+0.015);
@@ -316,46 +326,35 @@ void fitter(std::string data_filename,
     my_graph_p->Draw("AL");
     my_third_canvas->Print(output_filename.c_str());
 
-    TFile* file_mc = new TFile(mc_filename.c_str());
-    TH1D* h_smc = new TH1D("smearing", "smearing", nbins, e_min, e_max);
+    TH1F* h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
     int bin_min = h_mc->FindBin(fit_e_min) - 20;
     int bin_max = h_mc->FindBin(fit_e_max) + 10;
 
-    std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
-    std::cout << "Best fit momentum = " << p_best[0] << " (MeV)" <<  std::endl;
-    std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
-    std::cout << "Best fit momentum = " << p_best[1] << " (MeV)" <<  std::endl;
 
-    if(smear_flag){
-        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[1]));
-        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[1]));
-        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[1]));
-        t_etot->SetNDC();
-        t_p->SetNDC();
-        t_chi2->SetNDC();
-        t_etot->Draw();
-        t_p->Draw();
-        t_chi2->Draw();
-    } else{
-        TLatex* t_etot = new TLatex (0.15, 0.8, Form("E_{tot} = %4.3f MeV",0.001*x_best[0]));
-        TText* t_p = new TText (0.15, 0.7, Form("P = %4.3f MeV",p_best[0]));
-        TLatex* t_chi2 = new TLatex (0.15, 0.6, Form("#chi^{2} = %2.1f",chi2_min[0]));
-        t_etot->SetNDC();
-        t_p->SetNDC();
-        t_chi2->SetNDC();
-        t_etot->Draw();
-        t_p->Draw();
-        t_chi2->Draw();
+    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
+    if (smear_flag) {
+        chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, true));
     }
+
+
+    std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
+    std::cout << "Best fit momentum = "     << p_best[0] << " (MeV)" <<  std::endl;
+    if(smear_flag){
+        std::cout << "Best fit total energy = " << x_best[1] << " (keV)" <<  std::endl;
+        std::cout << "Best fit momentum = "     << p_best[1] << " (MeV)" <<  std::endl;
+    }
+
     TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
-    leg->SetFillColor(0);
-    leg->AddEntry(h_mc, "Default MC" , "l");
+
+    setup_legend(leg, h_mc, "Default MC", x_best[0], p_best[0], chi2_min[0]);
     if(smear_flag){
-        leg->AddEntry(h_smc, "Smeared MC" , "l");
+        setup_legend(leg, h_smc, "Smeared MC", x_best[1], p_best[1], chi2_min[1]);
     }
+    leg->SetFillColor(0);
     leg->Draw();
 
-    my_canvas->SaveAs(output_filename.c_str());
+    std::cout << "Saving canvas to: " << output_filename << std::endl;
+    my_canvas->SaveAs(("1"+output_filename).c_str());
 
     std::ofstream ofs("bestfit_momentum_tmp.txt");
     std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
@@ -364,8 +363,10 @@ void fitter(std::string data_filename,
     }else{
         ofs << p_best[0];
     }
-    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t";
-    diff_out << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
+
+    std::cout << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
+
+    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
     for(int i = 0; i < source_e_true.size(); i++){
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
@@ -373,4 +374,5 @@ void fitter(std::string data_filename,
     ofs << endl;
     ofs.close();
     diff_out.close();
+    file_mc->Close();
 }

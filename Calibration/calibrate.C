@@ -145,14 +145,14 @@ void calibrate(){
     double mean;
     double error;
     double K40_peak_ref = -1;
-    TH1D* hists[ge_data_files.size()];
+    TH1F* hists[ge_data_files.size()];
 
-    TH1D* Ni_sum = new TH1D("Co60+Ni_sum", "Co60+Ni_sum", nbins, 0, nbins);
+    TH1F* Ni_sum = new TH1F("Co60+Ni_sum", "Co60+Ni_sum", nbins, 0, nbins);
 
     // Loop over the data files.
     for(int file_index = 0; file_index < ge_data_files.size(); file_index++){
 
-        hists[file_index] = new TH1D(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
+        hists[file_index] = new TH1F(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
         // Read data out of the file ge_data_files[file_index] into the histogram created above
         read_data_into_hist(DATA_DIR + ge_data_files[file_index], hists[file_index]);
@@ -300,7 +300,7 @@ void calibrate(){
         c_calib->SetTitle(ge_data_files[file_index].c_str());
         std::string hist_name = "hcalib_" + ge_data_files[file_index];
 
-        TH1D* hists_calib = new TH1D(hist_name.c_str(), hist_name.c_str(), nbins, e_min, e_max);
+        TH1F* hists_calib = new TH1F(hist_name.c_str(), hist_name.c_str(), nbins, e_min, e_max);
         for (Int_t ibin = 0; ibin < nbins; ibin++) {
             hists_calib->SetBinContent(ibin + 1, hists[file_index]->GetBinContent(ibin + 1));
         }
