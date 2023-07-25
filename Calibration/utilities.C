@@ -83,9 +83,9 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     ge_fit->SetParLimits(0, 0., pow(10., 6));
     ge_fit->SetParLimits(2, .1, 10.);
     ge_fit->SetParameter(0, 100.);
-    //ge_fit->SetRange(search_min, search_max);
+    ge_fit->SetRange(search_min, search_max);
 
-    input_hist->SetAxisRange(search_min, search_max);
+    //input_hist->SetAxisRange(search_min, search_max);
 
     // Make a first guess
     double guess_mean = input_hist->GetMean();
