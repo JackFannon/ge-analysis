@@ -1,5 +1,7 @@
 #include "../Calibration/utilities.C"
 #include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -21,13 +23,14 @@ const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
 const std::string mc_filename = "12960.root";
 
+float chi2_min;
+int calc_flag = 1;
+
 
 float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_flag = false){
     // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
     int bin_max = h_data->FindBin(e_max);
-
-    std::cout << "MC MIN BINNNNNNNNNNNNNNNNN " << h_mc->FindBin(e_min) << std::endl;
 
     // Print out bin and energy values
     std::cout << "================ " << e_min << " " << e_max << " " << bin_min << " " << bin_max << std::endl;
@@ -35,10 +38,6 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
     // Get the integral where the peak should be to normalise
     double norm_data = h_data->Integral(bin_min,bin_max);
     double norm_mc = h_mc->Integral(bin_min,bin_max);
-
-    std::cout << norm_mc << std::endl;
-
-
 
     // Check that axes are consistent
     double xmax_data = h_data->GetXaxis()->GetXmax();
@@ -58,9 +57,10 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
     int ndf = 0;
 
     TCanvas* c1 = new TCanvas("", "");
-
-    h_mc->Draw();
-    c1->SaveAs("CHI2.pdf");
+    if(calc_flag == 1){
+        c1->Print("mc_multi.pdf(");
+        calc_flag = 2;
+    }
 
     // Loop over the bins and calculate the chi2 between the data and MC
     for (int i = bin_min; i <= bin_max; i++){
@@ -75,10 +75,6 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
         ndf++;
     }
 
-    std::cout << "CHI2 ================= " << chi2 << std::endl;
-
-    int max_bin_mc = h_mc -> GetMaximumBin();
-    double scalefactor;
 
     // Plotting
     std::string dummy;
@@ -90,6 +86,7 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
             h_mc->SetBinContent(i+1, n_mc);
             h_mc->SetBinError(i+1, err_mc);
         }
+        int max_bin_mc = h_mc->GetBinContent(h_mc->GetMaximumBin());
         c1->cd();
         h_data->GetXaxis()->SetRangeUser(hist_x_min,hist_x_max);
         h_data->GetXaxis()->SetTitle("Energy [MeV]");
@@ -100,6 +97,7 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
         h_mc->SetLineWidth(2);
         h_data->SetLineWidth(2);
         h_data->SetLineColor(1);
+        h_data->GetYaxis()->SetRangeUser(0, 1.2*  max_bin_mc);
         h_data->Draw("e");
         h_mc->Draw("hist same");
         h_data->Draw("e same");
@@ -115,7 +113,17 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf-1 << std::endl;
     }
 
-    c1->SaveAs("new.ps");
+    calc_flag++;
+    if(calc_flag < 153){
+        c1->Print("mc_multi.pdf");
+    }else{
+        c1->Print("mc_multi.pdf)");
+    }
+
+    if(chi2_min == 0 || chi2_min > chi2){
+        chi2_min = chi2;
+        c1->Print("mc_data_comparison.pdf");
+    }
     std::cout << std::endl;
 
     return chi2;
@@ -180,7 +188,7 @@ TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size(
     return h_mc_smeared;
 }
 
-void fitter(std::string data_filename,
+void fit_linac(std::string data_filename,
             int data_type,
             int x_min,
             int x_max,
@@ -190,8 +198,6 @@ void fitter(std::string data_filename,
             int beam_energy,
             std::string xpos,
             std::string zpos){
-
-
 
     std::vector<float> chi2;
 
@@ -288,27 +294,6 @@ void fitter(std::string data_filename,
         mc_file->Close();
     }
 
-    // TFile for the MC root file
-    TFile* file_mc = new TFile(("../MC/" + std::to_string(x_best[0]) + ".root").c_str(), "READ");
-
-    // Get the histogram of total energy deposition in the Ge detector from the MC file
-    TH1F* h_mc = dynamic_cast<TH1F*>(file_mc->Get("h21"));
-
-    TCanvas* my_other_canvas = new TCanvas("c2", "c2", 600, 600);
-    TGraph* my_graph = new TGraph(chi2_vec.size(), &x_vec[0], &smeared_chi2_vec[0]);
-
-    if(smear_flag){
-        my_graph->GetXaxis()->SetRangeUser(x_best[1] - 15, x_best[1] + 15);
-        my_graph->GetYaxis()->SetRangeUser(0, chi2_min[1] + 200);
-    }else{
-        my_graph->GetXaxis()->SetRangeUser(x_best[0] - 15, x_best[0] + 15);
-        my_graph->GetYaxis()->SetRangeUser(0, chi2_min[0] + 200);
-    }
-
-    my_graph->SetTitle(";Total energy (keV);#chi^{2}");
-    my_graph->Draw("AL");
-    my_other_canvas->SaveAs(("2" + output_filename).c_str());
-
     TCanvas* my_third_canvas = new TCanvas("c3", "c3", 600, 600);
     TGraph* my_graph_p;
     if(smear_flag){
@@ -318,27 +303,24 @@ void fitter(std::string data_filename,
     }
 
     my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
-    my_graph_p->Draw("AL");
+    my_graph_p->Draw("ALP");
     my_third_canvas->SaveAs(("3" + output_filename).c_str());
 
-    if(smear_flag){
-        my_graph_p->GetXaxis()->SetRangeUser(p_best[1]-0.015,p_best[1]+0.015);
-        my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[1]+200);
-    }else{
-        my_graph_p->GetXaxis()->SetRangeUser(p_best[0]-0.015,p_best[0]+0.015);
-        my_graph_p->GetYaxis()->SetRangeUser(0,chi2_min[0]+200);
-    }
+    // TFile for the MC root file
+    TFile* file_mc = new TFile(("../MC/" + std::to_string(x_best[0]) + ".root").c_str(), "READ");
 
-    my_graph_p->Draw("AL");
-    my_third_canvas->Print(output_filename.c_str());
+    // Get the histogram of total energy deposition in the Ge detector from the MC file
+    TH1F* h_mc = dynamic_cast<TH1F*>(file_mc->Get("h21"));
 
     TH1F* h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
+    if(smear_flag){
+        smear_mc(h_mc, x_best[0], source_e_error, fit_e_min, fit_e_max);
+    }
 
     chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
     if (smear_flag) {
         chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, true));
     }
-
 
     std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
     std::cout << "Best fit momentum = "     << p_best[0] << " (MeV)" <<  std::endl;
@@ -347,18 +329,6 @@ void fitter(std::string data_filename,
         std::cout << "Best fit momentum = "     << p_best[1] << " (MeV)" <<  std::endl;
     }
 
-    TLegend* leg = new TLegend(0.15,0.4,0.35,0.55);
-
-    setup_legend(leg, h_mc, "Default MC", x_best[0], p_best[0], chi2_min[0]);
-    if(smear_flag){
-        setup_legend(leg, h_smc, "Smeared MC", x_best[1], p_best[1], chi2_min[1]);
-    }
-    leg->SetFillColor(0);
-    leg->Draw();
-
-
-    std::cout << "Saving canvas to: " << output_filename << std::endl;
-    my_canvas->SaveAs(("1"+output_filename).c_str());
     std::ofstream ofs("bestfit_momentum_tmp.txt");
     std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
     if(smear_flag){
@@ -366,8 +336,6 @@ void fitter(std::string data_filename,
     }else{
         ofs << p_best[0];
     }
-
-    std::cout << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
     diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
@@ -378,4 +346,52 @@ void fitter(std::string data_filename,
     ofs.close();
     diff_out.close();
     file_mc->Close();
+}
+
+void fitter(std::string data_info, std::string output_filename){
+    // Information required by the fitting function above is as follows:
+    // std::string data_filename           - Filename of Ge detector data
+    //         int data_type               - Type of data (refers to the type of detector) -- TODO add different detector functionality in
+    //         int x_min                   - Minimum energy value for MC
+    //         int x_max                   - Maximum energy value for MC
+    //         double fit_e_min            - Lower bound for data peak
+    //         double fit_e_max            - Upper bound for data peak
+    //         std::string output_filename - Output name for plots
+    //         int beam_energy             - Approximate linac beam energy
+    //         std::string xpos            - Approximate x position of beam
+    //         std::string zpos            - Approximate z position of beam
+
+    // Intialise variables to read out the runlist file:
+    int run_number;
+    int approx_energy;
+    int data_type;
+    std::string approx_x;
+    std::string approx_z;
+    std::string filename;
+    int min_mc_energy;
+    int max_mc_energy;
+    float min_data_energy;
+    float max_data_energy;
+
+    std::ifstream input_file(data_info);
+
+    if (!input_file){
+        std::cerr << "Error opening file " << data_info << std::endl;
+        return;
+    }
+
+    std::string line;
+
+    while(std::getline(input_file, line)){
+        if(line.empty() || line[0] == '#'){
+            continue;
+        }
+
+        std::istringstream buffer(line);
+
+        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy;
+
+        fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_filename, approx_energy, approx_x, approx_z);
+    }
+    return;
 }

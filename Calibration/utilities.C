@@ -51,7 +51,7 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
             }
             line >> count;
             bin++;
-            if (bin <= nbins) {
+            if (bin <= nbins){
                 hist->SetBinContent(bin, count);
             }
         }
