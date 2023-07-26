@@ -19,8 +19,8 @@ make gedeo
 #set i = 8900
 #while ($i <= 9000)
 
-set i = 8850
-while($i <= 9000)
+set i = 0
+while($i <= 14000)
 
 #set i = 13700
 #while ($i <= 13800)
