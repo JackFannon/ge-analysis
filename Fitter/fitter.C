@@ -20,12 +20,9 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
 const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
-
-const std::string mc_filename = "12960.root";
+const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/2023/raw/";
 
 float chi2_min;
-int calc_flag = 1;
-
 
 float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_flag = false){
     // Find bin range where the LINAC peak should be
@@ -57,10 +54,6 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
     int ndf = 0;
 
     TCanvas* c1 = new TCanvas("", "");
-    if(calc_flag == 1){
-        c1->Print("mc_multi.pdf(");
-        calc_flag = 2;
-    }
 
     // Loop over the bins and calculate the chi2 between the data and MC
     for (int i = bin_min; i <= bin_max; i++){
@@ -111,13 +104,6 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
         l2->Draw();
         c1->Update();
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf-1 << std::endl;
-    }
-
-    calc_flag++;
-    if(calc_flag < 153){
-        c1->Print("mc_multi.pdf");
-    }else{
-        c1->Print("mc_multi.pdf)");
     }
 
     if(chi2_min == 0 || chi2_min > chi2){
@@ -231,15 +217,19 @@ void fit_linac(std::string data_filename,
 
     // Loop over the energy range between x_min and x_max
     for (int x = x_min; x < x_max; x++) {
-
+        std::string mc_filename;
         // Open MC file
-        std::string mc_filename = "../MC/" + std::to_string(x) + ".root";
+        if(x >= 10000){
+            mc_filename = "../MC/" + std::to_string(x) + ".root";
+        }else{
+            mc_filename = "../MC/0" + std::to_string(x) + ".root";
+        }
 
         // TFile for the MC root file
         TFile* mc_file = new TFile(mc_filename.c_str(), "READ");
 
         // Get the histogram of total energy deposition in the Ge detector from the MC file
-        TH1F* h_mc = dynamic_cast<TH1F*>(mc_file->Get("h21"));
+        TH1F* h_mc = (TH1F*)mc_file->Get("h21");
 
         // Smear the MC histogram
         TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max);
@@ -278,7 +268,6 @@ void fit_linac(std::string data_filename,
             chi2_min[0] = chi2[0];
             x_best[0] = x;
             p_best[0] = p;
-            std::cout << "X BEST IS HERE" << x << std::endl;
         }
         // Do the same for the smeared case
         if (chi2[1] < chi2_min[1]){
@@ -304,13 +293,22 @@ void fit_linac(std::string data_filename,
 
     my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
     my_graph_p->Draw("ALP");
-    my_third_canvas->SaveAs(("3" + output_filename).c_str());
+    my_third_canvas->SaveAs((output_filename + "3.pdf").c_str());
+
+
+    std::string mc_filename;
 
     // TFile for the MC root file
-    TFile* file_mc = new TFile(("../MC/" + std::to_string(x_best[0]) + ".root").c_str(), "READ");
+    if(x_best[0] >= 10000){
+        mc_filename = "../MC/" + std::to_string(x_best[0]) + ".root";
+    }else{
+        mc_filename = "../MC/0" + std::to_string(x_best[0]) + ".root";
+    }
+
+    TFile* file_mc = new TFile(mc_filename.c_str(), "READ");
 
     // Get the histogram of total energy deposition in the Ge detector from the MC file
-    TH1F* h_mc = dynamic_cast<TH1F*>(file_mc->Get("h21"));
+    TH1F* h_mc = (TH1F*)file_mc->Get("h21");
 
     TH1F* h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
     if(smear_flag){
@@ -391,7 +389,7 @@ void fitter(std::string data_info, std::string output_filename){
 
         buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy;
 
-        fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_filename, approx_energy, approx_x, approx_z);
+        fit_linac(DATA_DIRECTORY + filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_filename, approx_energy, approx_x, approx_z);
     }
     return;
 }
