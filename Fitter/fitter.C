@@ -22,9 +22,9 @@ const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
 const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/2023/raw/";
 
-float chi2_min;
+float chi2_min_buffer = 99999999999999.;
 
-float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_flag = false){
+float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, std::string output_filename, bool plot_flag = false){
     // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
     int bin_max = h_data->FindBin(e_max);
@@ -71,7 +71,7 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
 
     // Plotting
     std::string dummy;
-    if (plot_flag){
+    if(plot_flag){
         int nbins = h_mc->GetNbinsX();
         for (int i = 0; i < nbins; i++){
             n_mc = h_mc->GetBinContent(i+1) * norm_data / norm_mc;
@@ -106,9 +106,10 @@ float calc_chi2(TH1F* h_data, TH1F* h_mc, double e_min, double e_max, bool plot_
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf-1 << std::endl;
     }
 
-    if(chi2_min == 0 || chi2_min > chi2){
-        chi2_min = chi2;
-        c1->Print("mc_data_comparison.pdf");
+    std::cout << "MIN =========================== " << chi2_min_buffer << " chi2 ===================== " << chi2 << std::endl;
+    if(chi2_min_buffer == 0 || chi2_min_buffer > chi2){
+        chi2_min_buffer = chi2;
+        c1->Print((output_filename + ".pdf").c_str());
     }
     std::cout << std::endl;
 
@@ -215,6 +216,8 @@ void fit_linac(std::string data_filename,
     int x_best[2] = {-1, -1};
     double p_best[2] = {0, 0};
 
+    chi2_min_buffer = 9999999999999.;
+    chi2_min_buffer = 99999999999.;
     // Loop over the energy range between x_min and x_max
     for (int x = x_min; x < x_max; x++) {
         std::string mc_filename;
@@ -241,9 +244,9 @@ void fit_linac(std::string data_filename,
         double p = sqrt(pow(etot, 2) - pow(0.511, 2));
 
         // Calculate how well the MC compares to the data
-        chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
+        chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, output_filename, true));
         if (smear_flag) {
-            chi2.push_back(calc_chi2(h_data_calib, h_mc_smeared, fit_e_min, fit_e_max, true));
+            chi2.push_back(calc_chi2(h_data_calib, h_mc_smeared, fit_e_min, fit_e_max, output_filename, true));
         }
 
         // Draw the legend and save the canvas
@@ -293,7 +296,7 @@ void fit_linac(std::string data_filename,
 
     my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
     my_graph_p->Draw("ALP");
-    my_third_canvas->SaveAs((output_filename + "3.pdf").c_str());
+    my_third_canvas->SaveAs((output_filename + ".root").c_str());
 
 
     std::string mc_filename;
@@ -315,9 +318,9 @@ void fit_linac(std::string data_filename,
         smear_mc(h_mc, x_best[0], source_e_error, fit_e_min, fit_e_max);
     }
 
-    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, true));
+    chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, output_filename, true));
     if (smear_flag) {
-        chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, true));
+        chi2.push_back(calc_chi2(h_data_calib, h_smc, fit_e_min, fit_e_max, output_filename, true));
     }
 
     std::cout << "Best fit total energy = " << x_best[0] << " (keV)" <<  std::endl;
@@ -371,25 +374,40 @@ void fitter(std::string data_info, std::string output_filename){
     float min_data_energy;
     float max_data_energy;
 
+    // Load in the input file list
     std::ifstream input_file(data_info);
 
+    // Check that input file list exists and has opened
     if (!input_file){
         std::cerr << "Error opening file " << data_info << std::endl;
         return;
     }
 
+    // String to load the file contents into
     std::string line;
 
+    // Loop over the file contents
     while(std::getline(input_file, line)){
+        // If the line is empty of starts with a # then skip
         if(line.empty() || line[0] == '#'){
             continue;
         }
 
+        // Buffer to convert between string and the variables
         std::istringstream buffer(line);
 
+        // Load information into local variables
         buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy;
 
-        fit_linac(DATA_DIRECTORY + filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_filename, approx_energy, approx_x, approx_z);
+        // Create a string that matches the input data filename, but without the ".csv" on the end
+        std::string filename_wo_csv;
+        if(filename.substr(filename.length() - 4) == ".csv"){
+            filename_wo_csv = filename.substr(0, filename.length() - 4);
+        }
+
+        // Call fit_linac to find the best match between MC and data
+        fit_linac(DATA_DIRECTORY + filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_filename + filename_wo_csv, approx_energy, approx_x, approx_z);
     }
+
     return;
 }

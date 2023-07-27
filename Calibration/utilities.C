@@ -59,7 +59,7 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
 }
 
 void set_style(int fontid){
-    gStyle->SetOptStat(0);
+    gStyle->SetOptStat(000000000);
     gStyle->SetPadBorderSize(0);
     gStyle->SetLegendBorderSize(0);
     gStyle->SetFrameFillColor(0);
@@ -83,10 +83,11 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     ge_fit->SetParLimits(0, 0., pow(10., 6));
     ge_fit->SetParLimits(2, .1, 10.);
     ge_fit->SetParameter(0, 100.);
-    ge_fit->SetRange(search_min, search_max);
+    //ge_fit->SetRange(search_min, search_max);
 
-    //input_hist->SetAxisRange(search_min, search_max);
 
+    TH1F* copy_hist = (TH1F*)input_hist->Clone("copy");
+    copy_hist->SetAxisRange(search_min, search_max);
     // Make a first guess
     double guess_mean = input_hist->GetMean();
     double guess_sigma = input_hist->GetRMS();
@@ -96,10 +97,10 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     ge_fit->SetParameter(2, guess_sigma);
 
     for (int i = 0; i < 10; i++){
-        input_hist->Fit("gauslin", "LIRQ");
+        copy_hist->Fit("gauslin", "LIRQ");
     }
 
-    input_hist->Fit("gauslin", "LIR");
+    copy_hist->Fit("gauslin", "LIR");
     double norm = ge_fit->GetParameter(0);
     guess_mean = ge_fit->GetParameter(1);
     guess_sigma = ge_fit->GetParameter(2);
