@@ -5,6 +5,8 @@
 #include <vector>
 //#include "../Fitter/headers.h"
 
+// Reads a raw data file, inputname, and populates the TH1F, hist, with
+//   channel counts. This is not calibrated, just channel vs counts.
 void read_data_into_hist(std::string inputname, TH1F* hist){
      // Open the file input name and check that it has opened properly
     std::ifstream input_data;
@@ -58,8 +60,10 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
     }
 }
 
+// Sets the drawing style
+// NOTE - Not sure if any of this actually works. ROOT seems to ignore gStyle->SetOptStat(0) anyway
 void set_style(int fontid){
-    gStyle->SetOptStat(000000000);
+    gStyle->SetOptStat(0);
     gStyle->SetPadBorderSize(0);
     gStyle->SetLegendBorderSize(0);
     gStyle->SetFrameFillColor(0);
@@ -76,6 +80,9 @@ void set_style(int fontid){
     return;
 }
 
+// Attempts to fit a Gaussian + linear fit between search_min and search_max
+// Populates the variables mean and error with the mean value and standard deviation of the
+//   Gaussian fit.
 void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double* mean, double* error){
 
     // Initialise the fit
@@ -109,6 +116,7 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     *error = guess_sigma;
 }
 
+// Plots a histogram of channel number vs counts
 TH1F* plot_channel_hist(std::string inputFile, std::string directory){
     // Open the file input name and check that it has opened properly
     std::ifstream input_data;
@@ -165,16 +173,18 @@ TH1F* plot_channel_hist(std::string inputFile, std::string directory){
     return hist;
 }
 
-
-std::vector<std::string> load_data(std::string filenames, std::string directory){
+// Returns a vector containing a list of paths for the raw Ge data
+// filename - Filename of the list of files to read
+// directory - location of the file with name filename
+std::vector<std::string> load_data(std::string filename, std::string directory){
 
     std::vector<std::string> file_list;
 
     std::ifstream input_file;
-    input_file.open((directory + filenames).c_str());
+    input_file.open((directory + filename).c_str());
 
     if(!input_file.is_open()){
-        std::cerr << "Could not open " << directory + filenames << std::endl;
+        std::cerr << "Could not open " << directory + filename << std::endl;
     }
 
     std::string buffer;
