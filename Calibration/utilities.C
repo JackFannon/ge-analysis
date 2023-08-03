@@ -1,9 +1,11 @@
+#include "TH1.h"
+#include "TStyle.h"
+#include "TF1.h"
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <fstream>
 #include <vector>
-//#include "../Fitter/headers.h"
 
 // Reads a raw data file, inputname, and populates the TH1F, hist, with
 //   channel counts. This is not calibrated, just channel vs counts.

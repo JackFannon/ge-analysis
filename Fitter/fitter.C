@@ -1,3 +1,12 @@
+#include "TH1.h"
+#include "TLine.h"
+#include "TLegend.h"
+#include "TText.h"
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TLatex.h"
+#include "TGraph.h"
+#include "TRandom.h"
 #include "../Calibration/utilities.C"
 #include <fstream>
 #include <iostream>
@@ -8,7 +17,6 @@
 //====================================================================================================
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
-
 const int nbins = 4096;
 const int data_type = 0;
 
@@ -363,7 +371,7 @@ void fit_linac(std::string data_filename,
     }
 
     std::ofstream ofs("bestfit_momentum_tmp.txt");
-    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", ios::app);
+    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
     if(smear_flag){
         ofs << p_best[1];
     }else{
@@ -375,7 +383,7 @@ void fit_linac(std::string data_filename,
     for(int i = 0; i < source_e_true.size(); i++){
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
     }
-    ofs << endl;
+    ofs << std::endl;
     ofs.close();
     diff_out.close();
     file_mc->Close();
