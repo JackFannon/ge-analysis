@@ -8,6 +8,7 @@
 #include "TGraph.h"
 #include "TRandom.h"
 #include "../Calibration/utilities.C"
+#include "TVirtualPad.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -161,6 +162,8 @@ TH1F* apply_calibration(std::string raw_data_filename){
     h_data_calib->GetYaxis()->SetTitle("Counts");
     h_data_calib->GetXaxis()->SetTitle("Energy [MeV]");
 
+    h_data_calib->Draw();
+
     return h_data_calib;
 }
 //====================================================================================================
@@ -209,11 +212,13 @@ TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size(
     for(int i = bin_min; i < bin_max; i++){
         mc_entry_bin = h_mc->GetBinContent(i + 1);
         for (int j = 0; j < 200; j++) {
-            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), 30 * source_e_error[2]);
+            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), 3 * source_e_error[2]);
             double smearing_factor = double(mc_entry_bin) / 200.0;
             h_mc_smeared->Fill(random, smearing_factor);
         }
     }
+
+
     return h_mc_smeared;
 }
 //====================================================================================================
@@ -246,11 +251,12 @@ void fit_linac(std::string data_filename,
 
     TH1F* h_data_calib = apply_calibration(data_filename);
 
+
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0 ; i < source_e_true.size(); i++) {
-        fit_peak_ge(h_data_calib, 0.975 * source_e_true[i], 1.025 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
+        std::cout << source_e_true[i] << std::endl;
+        fit_peak_ge(h_data_calib, 0.991 * source_e_true[i], 1.009 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
     }
-
 
     std::vector<double> chi2_vec;
     std::vector<double> smeared_chi2_vec;
@@ -278,7 +284,7 @@ void fit_linac(std::string data_filename,
         TFile* mc_file = new TFile(mc_filename.c_str(), "READ");
 
         // Get the histogram of total energy deposition in the Ge detector from the MC file
-        TH1F* h_mc = (TH1F*)mc_file->Get("h2123323");
+        TH1F* h_mc = (TH1F*)mc_file->Get("h21");
 
         // Smear the MC histogram
         TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max);
