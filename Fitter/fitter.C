@@ -209,7 +209,7 @@ TH1F* smear_mc(TH1F* h_mc, int energy, double source_e_error[source_e_true.size(
     for(int i = bin_min; i < bin_max; i++){
         mc_entry_bin = h_mc->GetBinContent(i + 1);
         for (int j = 0; j < 200; j++) {
-            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), source_e_error[2]);
+            double random = gRandom->Gaus(h_mc->GetXaxis()->GetBinCenter(i+1), 30 * source_e_error[2]);
             double smearing_factor = double(mc_entry_bin) / 200.0;
             h_mc_smeared->Fill(random, smearing_factor);
         }
