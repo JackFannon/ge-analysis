@@ -164,6 +164,8 @@ TH1F* apply_calibration(std::string raw_data_filename){
 
     h_data_calib->Draw();
 
+    delete h_data_raw;
+
     return h_data_calib;
 }
 //====================================================================================================
@@ -334,6 +336,11 @@ void fit_linac(std::string data_filename,
         // Remove all entries from the chi2 vector
         chi2.clear();
 
+        // Delete histograms
+        delete h_mc;
+        delete h_mc_smeared;
+        delete leg;
+
         // Close the file
         mc_file->Close();
     }
@@ -346,6 +353,7 @@ void fit_linac(std::string data_filename,
         my_graph_p = new TGraph(chi2_vec.size(), &p_vec[0], &chi2_vec[0]);
     }
 
+    // Draw graph of momentum against chi^2
     my_graph_p->SetTitle(";Momentum (MeV);#chi^{2}");
     my_graph_p->Draw("ALP");
     my_third_canvas->SaveAs((output_filename + ".root").c_str());
@@ -396,8 +404,17 @@ void fit_linac(std::string data_filename,
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
     }
     ofs << std::endl;
+
     ofs.close();
     diff_out.close();
+
+    // Delete h_data_calib as it is not used past here
+    delete h_data_calib;
+    delete h_smc;
+    delete h_mc;
+    delete my_canvas;
+    delete my_third_canvas;
+
     file_mc->Close();
 }
 //====================================================================================================

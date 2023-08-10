@@ -93,15 +93,17 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     ge_fit->SetParLimits(2, .1, 10.);
     ge_fit->SetParameter(0, 100.);
     //ge_fit->SetRange(search_min, search_max);
-
+    std::cout << __LINE__ << std::endl;
 
     TH1F* copy_hist = (TH1F*)input_hist->Clone("copy");
-    copy_hist->SetAxisRange(search_min, search_max);
+    copy_hist->SetAxisRange(0.98 * search_min, 1.02 * search_max);
     // Make a first guess
-    double guess_mean = input_hist->GetMean();
-    double guess_sigma = input_hist->GetRMS();
+    double guess_mean = copy_hist->GetMean();
+    double guess_sigma = copy_hist->GetRMS();
 
-    ge_fit->SetParLimits(1, guess_mean - 3, guess_mean + 3);
+    std::cout << guess_mean << std::endl;
+
+    ge_fit->SetParLimits(1, guess_mean, guess_mean);
     ge_fit->SetParameter(1, guess_mean);
     ge_fit->SetParameter(2, guess_sigma);
 
@@ -116,6 +118,7 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     double guess_error = ge_fit->GetParError(1);
     *mean = guess_mean;
     *error = guess_sigma;
+    delete copy_hist;
 }
 
 // Plots a histogram of channel number vs counts
