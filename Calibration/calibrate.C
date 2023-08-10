@@ -1,3 +1,7 @@
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TGraphErrors.h"
 #include <fstream>
 #include <sstream>
 #include <string>

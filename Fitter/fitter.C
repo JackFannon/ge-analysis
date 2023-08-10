@@ -21,7 +21,7 @@
 const int nbins = 4096;
 const int data_type = 0;
 
-const bool smear_flag = false;
+const bool smear_flag = true;
 
 const double calib_const[2] = {-0.166597, 0.148259};
 const double intercept = - calib_const[0]/calib_const[1];

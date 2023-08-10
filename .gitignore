@@ -10,3 +10,4 @@ Output/
 *.hbk
 *.card
 ./MCGenerator/script/*.csh
+*.el
