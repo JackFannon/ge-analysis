@@ -390,18 +390,26 @@ void fit_linac(std::string data_filename,
         std::cout << "Best fit momentum = "     << p_best[1] << " (MeV)" <<  std::endl;
     }
 
-    std::ofstream ofs("bestfit_momentum_tmp.txt");
-    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
-    if(smear_flag){
+    std::ofstream ofs;
+    ofs.open("bestfit_momentum_tmp.txt", std::ios::app);
+
+    std::ofstream diff_out;
+    diff_out.open("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
+
+    /*if(smear_flag){
         ofs << p_best[1];
     }else{
         ofs << p_best[0];
-    }
+    }*/
 
     diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
-    for(int i = 0; i < source_e_true.size(); i++){
+    /*for(int i = 0; i < source_e_true.size(); i++){
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
+    }*/
+    ofs << p_best[0];
+    if(smear_flag){
+        ofs << "    " << p_best[1];
     }
     ofs << std::endl;
 
