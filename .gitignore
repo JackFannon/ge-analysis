@@ -1,2 +1,12 @@
 *.o
 all_headers.h
+*.root
+*.png
+Data/
+Output/
+*.txt
+2021Analysis
+*.pdf
+*.hbk
+*.card
+./MCGenerator/script/*.csh

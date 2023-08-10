@@ -1,0 +1,13 @@
+* Structure of fitting program
+** Outline
+- Load in the raw data
+  - Load the channel vs counts data from the raw data files
+  - Fill a histogram with the channel vs counts
+- Calibrate the raw histogram
+  - Using the slope and intercept values from the Ni calibration, re-bin the raw histogram so that the x-axis now represents energy in MeV.
+  - This requires a new histogram object and looping over the bins to re-bin it.
+- Fit the K40, C60 and Tl208 peaks in the now calibrated histogram.
+  - Uses the energy of the decays to locate the peaks.
+- Loop over the energy range where the LINAC peak should be
+  - Each loop opens the next MC file for that specific energy (x value)
+  -

@@ -12,8 +12,8 @@ c     parameter (offset=36.379)
 c     parameter (slope=5.2230)
 c     Y. Nakajima: Updating the calibrtion parameters using the 2016 data
 c     Aug. 29, 2016      
-      parameter (offset=34.1717)
-      parameter (slope=5.22554)
+      parameter (offset=1.12369)
+      parameter (slope=6.74495)
 
       hmin = offset/1000.
       hmax = (slope*4096.+offset)/1000.

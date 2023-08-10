@@ -8,8 +8,8 @@ C     1998 11 10 Add Histogram( # fo bin = 4096,1024)
 C**********************************************************************
       INCLUDE 'ugeant.h'
       real offset,slope,hmin,hmax
-      parameter (offset=36.905)
-      parameter (slope=5.2197)
+      parameter (offset=1.12369)
+      parameter (slope=6.74495)
 
       hmin = offset/1000.
       hmax = (slope*4096.+offset)/1000.
