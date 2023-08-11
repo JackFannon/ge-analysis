@@ -11,3 +11,4 @@ Output/
 *.card
 ./MCGenerator/script/*.csh
 *.el
+.DS_Store
