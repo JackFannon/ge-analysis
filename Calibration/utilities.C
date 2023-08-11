@@ -1,6 +1,7 @@
 #include "TH1.h"
 #include "TStyle.h"
 #include "TF1.h"
+#include <exception>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -19,6 +20,42 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
     }
     // Create a buffer string to load data into
     std::string buffer;
+
+    // Need to check what format the data is in - new detector vs old detector
+    std::getline(input_data, buffer);
+
+    std::istringstream line(buffer);
+
+    std::string firstWord;
+
+    std::getline(line, firstWord, ',');
+
+    std::cout << firstWord << std::endl;
+
+
+    try{
+        if(firstWord != "1SPECTRUM" && firstWord != "1Channel"){
+            throw firstWord;
+        }
+    }
+    catch (std::string &word){
+        std::cout << "Error: Data type may not be supported. Check the documentation for supported types, functionality may need to be added to read your data." << word << std::endl;
+    }
+    catch (const char* word){
+        std::cout << "Error: Data type may not be supported. Check the documentation for supported types, functionality may need to be added to read your data." << word << std::endl;
+    }
+
+
+
+
+    if(firstWord == "SPECTRUM"){
+        // WE HAVE DATA FROM THE NEW DETECTOR
+        std::cout << "NEW DETECTOR" << std::endl;
+    }
+    else if(firstWord == "1Channel"){
+        // WE HAVE DATA FROM THE OLD DETECTOR
+        std::cout << "OLD DETECTOR" << std::endl;
+    }
 
     // Counter for the bin that is currently being read from the data file
     int bin = 0;

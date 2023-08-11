@@ -13,12 +13,20 @@
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
 
-const std::string DATA_LIST = "newGe_list.txt";
-const std::string DATA_LIST_DIR = "../Data/2023/";
-const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
+// const std::string DATA_LIST = "newGe_list.txt";
+// const std::string DATA_LIST_DIR = "../Data";
+// const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
+// const std::string OUTPUT_ROOT_FILE = "histograms.root";
+// const std::string ROI_FILE = "roi.txt";
+
+const std::string DATA_LIST = "test_old_new.txt";
+const std::string DATA_LIST_DIR = "../Data/";
+const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
+
+const std::string OUTPUT_ROOT_FILE = "test_old_new.root";
+
 const std::string ROI_FILE = "roi.txt";
 
-const std::string OUTPUT_ROOT_FILE = "histograms.root";
 
 const int NUM_OF_ISOTOPES = 4;
 const std::string ISOTOPE_SYMBOLS[NUM_OF_ISOTOPES] = {
@@ -56,6 +64,7 @@ void calibrate(){
     TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
 
     for(std::string file_name: ge_data_files){
+        std::cout << DATA_DIR << "    " << file_name << std::endl;
         plot_channel_hist(file_name, DATA_DIR)->Write();
     }
 
@@ -158,9 +167,10 @@ void calibrate(){
 
         hists[file_index] = new TH1F(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
+
         // Read data out of the file ge_data_files[file_index] into the histogram created above
         read_data_into_hist(DATA_DIR + ge_data_files[file_index], hists[file_index]);
-
+        return;
         //============================================================================================
         //==================================== FIT THE PEAKS =========================================
         //============================================================================================
