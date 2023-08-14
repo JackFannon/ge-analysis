@@ -63,11 +63,6 @@ void calibrate(){
     // Open the ROOT file to store output histograms in
     TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
 
-    for(std::string file_name: ge_data_files){
-        std::cout << DATA_DIR << "    " << file_name << std::endl;
-        plot_channel_hist(file_name, DATA_DIR)->Write();
-    }
-
     std::vector<std::vector<int> > isotopes_in_file;
 
     // Search for the isotope names in the filenames. If the isotope name is present then the data
@@ -170,7 +165,6 @@ void calibrate(){
 
         // Read data out of the file ge_data_files[file_index] into the histogram created above
         read_data_into_hist(DATA_DIR + ge_data_files[file_index], hists[file_index]);
-        return;
         //============================================================================================
         //==================================== FIT THE PEAKS =========================================
         //============================================================================================
@@ -184,9 +178,6 @@ void calibrate(){
 
                 // Setup a canvas named after the filename, "file type (BG, Co, Ni)" and the peak number
                 std::string canvas_name = ge_data_files[file_index] + ISOTOPE_SYMBOLS[isotope_type] + std::to_string(isotope_peak);
-
-                std::cout << ge_data_files[file_index] << "    " << canvas_name << std::endl;
-
 
                 TCanvas* my_canvas = new TCanvas(canvas_name.c_str(), canvas_name.c_str(), 600, 600);
                 my_canvas->SetTitle(ge_data_files[file_index].c_str());

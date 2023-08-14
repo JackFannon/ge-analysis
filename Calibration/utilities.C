@@ -1,3 +1,4 @@
+#include "TCanvas.h"
 #include "TH1.h"
 #include "TStyle.h"
 #include "TF1.h"
@@ -30,33 +31,16 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
 
     std::getline(line, firstWord, ',');
 
-    std::cout << firstWord << std::endl;
-
-
-    try{
-        if(firstWord != "SPECTRUM" && firstWord != "Channel"){
-            throw firstWord;
-        }
-    }
-    catch (std::string &word){
-        std::cout << "Error: Data type may not be supported. Check the documentation for supported types, functionality may need to be added to read your data." << word << std::endl;
-    }
-    catch (const char* word){
-        std::cout << "Error: Data type may not be supported. Check the documentation for supported types, functionality may need to be added to read your data." << word << std::endl;
-    }
-
-
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
 
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 
-    if(firstWord == "1SPECTRUM"){
+    if(inputname.find("newGe") != std::string::npos){
         // WE HAVE DATA FROM THE NEW DETECTOR
-        std::cout << "NEW DETECTOR" << std::endl;
         // Need to skip the first 9 lines of the data file as these are all meta-data comments
-        for (int i = 0; i < 9; i++) {
+        for (int i = 1; i < 9; i++) {
             std::getline(input_data, buffer);
         }
         // Format of data is as follows:
@@ -78,38 +62,72 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
                 }
                 line >> count;
                 bin++;
-                if (bin <= nbins) {
-                    hist->SetBinContent(bin, count);
+                if (bin >= nbins) {
+                    break;
                 }
+                hist->SetBinContent(bin, count);
             }
         }
-    } else if (firstWord == "Channel") {
+    } else if (inputname.find("oldGe") != std::string::npos || inputname.find("OldGe") != std::string::npos) {
         // WE HAVE DATA FROM THE OLD DETECTOR
-        std::cout << "OLD DETECTOR" << std::endl;
         // Have already skipped the only comment line
         // Format of data is as follows:
         // Channel, Count
-        while (!input_data.eof()){
-            std::getline(input_data, buffer);
-            // Put contents into stringstream
-            std::stringstream line(buffer);
-            // Read channel # and convert to int
-            std::string channelstr;
-            std::getline(line, channelstr, ',');
-            std::string countstr;
-            std::getline(line, countstr, ',');
-            if(!channelstr.empty()){
-                std::cout << channelstr << " ," << countstr << std::endl;
-                int channel = std::stoi(channelstr);
-                // Now do same for counts
-                int counts = std::stoi(countstr);
-                if(channel <= nbins){
-                    hist->SetBinContent(channel, counts);
+        std::cout << "FIRST WORD IS " << firstWord << std::endl;
+        if(firstWord == "SPECTRUM"){
+            for(int i = 1; i < 9; i++){
+                std::getline(input_data, buffer);
+            }
+            while (!input_data.eof()) {
+                std::getline(input_data, buffer);
+                std::stringstream line(buffer);
+                int channel;
+                line >> channel;
+                for(int i = 0; i < 10; i++){
+                    int count = -9999;
+                    if (line.peek() == ','){
+                        line.ignore();
+                    }
+                    line >> count;
+                    bin++;
+                    std::cout << count << " " << bin << std::endl;
+                    if(bin >= nbins){
+                        break;
+                    }
+                    hist->SetBinContent(bin, count);
+                }
+            }
+        } else{
+            while (!input_data.eof()){
+                std::getline(input_data, buffer);
+                // Put contents into stringstream
+                std::stringstream line(buffer);
+                // Read channel # and convert to int
+                std::string channelstr;
+                std::getline(line, channelstr, ',');
+                std::string countstr;
+                std::getline(line, countstr, ',');
+                if(!channelstr.empty()){
+                    int channel = std::stoi(channelstr);
+                    // Now do same for counts
+                    int counts = std::stoi(countstr);
+                    if(channel <= nbins){
+                        hist->SetBinContent(channel, counts);
+                    }
                 }
             }
         }
     }
+    TCanvas* tc = new TCanvas("","",1200,600);
+
+    
+    std::string outputname = inputname.substr(inputname.find_last_of('/')+1);
+    //outputname = outputname.substr(0, outputname.size() - outputname.find_last_of("Ge") - 2);
+    tc->cd();
+    hist->Draw();
+    tc->SaveAs(("Output/" + outputname + "_channel_hist" + ".root").c_str());
 }
+
 
 // Sets the drawing style
 // NOTE - Not sure if any of this actually works. ROOT seems to ignore gStyle->SetOptStat(0) anyway
@@ -142,7 +160,6 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     ge_fit->SetParLimits(2, .1, 10.);
     ge_fit->SetParameter(0, 100.);
     //ge_fit->SetRange(search_min, search_max);
-    std::cout << __LINE__ << std::endl;
 
     TH1F* copy_hist = (TH1F*)input_hist->Clone("copy");
     copy_hist->SetAxisRange(0.98 * search_min, 1.02 * search_max);
@@ -160,7 +177,7 @@ void fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
         copy_hist->Fit("gauslin", "LIRQ");
     }
 
-    copy_hist->Fit("gauslin", "LIR");
+    copy_hist->Fit("gauslin", "LIRQ");
     double norm = ge_fit->GetParameter(0);
     guess_mean = ge_fit->GetParameter(1);
     guess_sigma = ge_fit->GetParameter(2);
@@ -218,7 +235,8 @@ TH1F* plot_channel_hist(std::string inputFile, std::string directory){
             }
             line >> count;
             bin++;
-            if (bin <= nbins) {
+            std::cout << bin << ", " << count << std::endl;
+            if (bin <= nbins){
                 hist->SetBinContent(bin, count);
             }
         }
