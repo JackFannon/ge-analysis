@@ -46,17 +46,6 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
     }
 
 
-
-
-    if(firstWord == "SPECTRUM"){
-        // WE HAVE DATA FROM THE NEW DETECTOR
-        std::cout << "NEW DETECTOR" << std::endl;
-    }
-    else if(firstWord == "1Channel"){
-        // WE HAVE DATA FROM THE OLD DETECTOR
-        std::cout << "OLD DETECTOR" << std::endl;
-    }
-
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
 
