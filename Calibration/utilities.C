@@ -34,7 +34,7 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
 
 
     try{
-        if(firstWord != "1SPECTRUM" && firstWord != "1Channel"){
+        if(firstWord != "SPECTRUM" && firstWord != "Channel"){
             throw firstWord;
         }
     }
@@ -59,41 +59,64 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
 
     // Counter for the bin that is currently being read from the data file
     int bin = 0;
+
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 
-    // Need to skip the first 9 lines of the data file as these are all meta-data comments
-    for (int i = 0; i < 9; i++) {
-        std::getline(input_data, buffer);
-    }
-
-    // String to store the channel number in (this is not used, but is good to be named something other than "useless variable")
-    int channel;
-
-    // Format of data is as follows:
-    // Channel, RSV1, RSV2, ..., RSV9, RSV10
-    // We're not interested in "Channel" but are interested in RSV1-10
-
-    // Loop over the rest of the file
-    while (!input_data.eof()) {
-        std::getline(input_data, buffer);
-
-        // Put contents on the line into a stringstream
-        std::stringstream line(buffer);
-
-        std::string token;
-        // Load the channel number from "line" into "channel"
-        line >> channel;
-        // Loop over the remaining RSV numbers in the line
-        for (int i = 0; i < 10; i++) {
-            int count = -9999;
-            if(line.peek() == ','){
-                line.ignore();
+    if(firstWord == "1SPECTRUM"){
+        // WE HAVE DATA FROM THE NEW DETECTOR
+        std::cout << "NEW DETECTOR" << std::endl;
+        // Need to skip the first 9 lines of the data file as these are all meta-data comments
+        for (int i = 0; i < 9; i++) {
+            std::getline(input_data, buffer);
+        }
+        // Format of data is as follows:
+        // Channel, RSV1, RSV2, ..., RSV9, RSV10
+        // We're not interested in "Channel" but are interested in RSV1-10
+        // Loop over the rest of the file
+        while (!input_data.eof()) {
+            std::getline(input_data, buffer);
+            // Put contents on the line into a stringstream
+            std::stringstream line(buffer);
+            // Load the channel number from "line" into "channel"
+            int channel;
+            line >> channel;
+            // Loop over the remaining RSV numbers in the line
+            for (int i = 0; i < 10; i++) {
+                int count = -9999;
+                if (line.peek() == ',') {
+                    line.ignore();
+                }
+                line >> count;
+                bin++;
+                if (bin <= nbins) {
+                    hist->SetBinContent(bin, count);
+                }
             }
-            line >> count;
-            bin++;
-            if (bin <= nbins){
-                hist->SetBinContent(bin, count);
+        }
+    } else if (firstWord == "Channel") {
+        // WE HAVE DATA FROM THE OLD DETECTOR
+        std::cout << "OLD DETECTOR" << std::endl;
+        // Have already skipped the only comment line
+        // Format of data is as follows:
+        // Channel, Count
+        while (!input_data.eof()){
+            std::getline(input_data, buffer);
+            // Put contents into stringstream
+            std::stringstream line(buffer);
+            // Read channel # and convert to int
+            std::string channelstr;
+            std::getline(line, channelstr, ',');
+            std::string countstr;
+            std::getline(line, countstr, ',');
+            if(!channelstr.empty()){
+                std::cout << channelstr << " ," << countstr << std::endl;
+                int channel = std::stoi(channelstr);
+                // Now do same for counts
+                int counts = std::stoi(countstr);
+                if(channel <= nbins){
+                    hist->SetBinContent(channel, counts);
+                }
             }
         }
     }
