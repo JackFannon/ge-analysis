@@ -19,13 +19,17 @@
 // const std::string OUTPUT_ROOT_FILE = "histograms.root";
 // const std::string ROI_FILE = "roi.txt";
 
-const std::string DATA_LIST = "test_old_new.txt";
+const std::string DATA_LIST = "old_nif_data.txt";
 const std::string DATA_LIST_DIR = "../Data/";
 const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
 
-const std::string OUTPUT_ROOT_FILE = "test_old_new.root";
+//const std::string ROI_LIST = "cross_calib_roi_list.txt";
+//const std::string ROI_LIST_DIR = "./";
 
-const std::string ROI_FILE = "roi.txt";
+const std::string OUTPUT_ROOT_FILE = "new.root";
+
+const std::string ROI_FILE = "new_detector_roi.txt";
+
 
 
 const int NUM_OF_ISOTOPES = 4;
@@ -57,7 +61,7 @@ void calibrate(){
     // Set gStyle options, see utilities.C for the function
     set_style(132);
 
-    // Read in the list of files from data_list.txt
+    // Read in the list of files from DATA_LIST in DATA_LIST_DIR
     std::vector<std::string> ge_data_files = load_data(DATA_LIST, DATA_LIST_DIR);
 
     // Open the ROOT file to store output histograms in
@@ -183,9 +187,9 @@ void calibrate(){
                 my_canvas->SetTitle(ge_data_files[file_index].c_str());
 
                 // Fit the peak with a gaussian using the information from the region of interest file
-                fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
+                TF1* ge_fit = fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
 
-                // Draw the histogram
+                // Draw the histogram and the fit
                 hists[file_index]->Draw();
 
                 // Store information about the fit (mean and error) and the true energy that the peak should represent
@@ -199,7 +203,9 @@ void calibrate(){
                     my_canvas->Write();
                 }
                 if(save_fit){
-                    hists[file_index]->SetAxisRange(roi_low[isotope_type][isotope_peak] - 50, roi_high[isotope_type][isotope_peak] + 50);
+                    hists[file_index]->SetAxisRange(0.98 * roi_low[isotope_type][isotope_peak], 1.02 * roi_high[isotope_type][isotope_peak]);
+                    hists[file_index]->Draw();
+                    ge_fit->Draw("histsame");
                     my_canvas->SaveAs(("../Output/" + canvas_name + ".png").c_str());
                 }
             }

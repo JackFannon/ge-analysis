@@ -15,13 +15,18 @@
 #include <string>
 #include <vector>
 
+// OPTIONS FOR CROSS CALIBRATION CHECKING
+//const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/";
+//const double calib_const[2] = {-8.084, 0.1915};
+
+
 //====================================================================================================
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
 const int nbins = 4096;
 const int data_type = 0;
 
-const bool smear_flag = true;
+const bool smear_flag = false;
 
 const double calib_const[2] = {-0.166597, 0.148259};
 const double intercept = - calib_const[0]/calib_const[1];
@@ -31,7 +36,7 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
 const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
-const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/2023/raw/";
+const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/NewGeDetector/";
 
 float chi2_min_buffer = 99999.;
 
