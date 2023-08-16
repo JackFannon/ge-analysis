@@ -9,6 +9,11 @@ Output/
 *.pdf
 *.hbk
 *.card
-./MCGenerator/script/*.csh
-*.el
-.DS_Store
+MCGenerator/script/*.csh
+MCGenerator/card
+MCGenerator/card/
+MCGenerator/ene/
+MCGenerator/err/
+MCGenerator/log/
+MCGenerator/script/
+MCGenerator/test6MeV/
