@@ -26,7 +26,7 @@ const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
 //const std::string ROI_LIST = "cross_calib_roi_list.txt";
 //const std::string ROI_LIST_DIR = "./";
 
-const std::string OUTPUT_ROOT_FILE = "new.root";
+const std::string OUTPUT_ROOT_FILE = "crosscalibold.root";
 
 const std::string ROI_FILE = "new_detector_roi.txt";
 
