@@ -13,22 +13,22 @@
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
 
-// const std::string DATA_LIST = "newGe_list.txt";
-// const std::string DATA_LIST_DIR = "../Data";
-// const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
-// const std::string OUTPUT_ROOT_FILE = "histograms.root";
-// const std::string ROI_FILE = "roi.txt";
-
-const std::string DATA_LIST = "old_nif_data.txt";
+const std::string DATA_LIST = "newGe_list.txt";
 const std::string DATA_LIST_DIR = "../Data/";
-const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
+const std::string DATA_DIR = DATA_LIST_DIR + "NewGeDetector/";
+const std::string OUTPUT_ROOT_FILE = "histogramsnew.root";
+const std::string ROI_FILE = "roi.txt";
+
+// const std::string DATA_LIST = "old_nif_data.txt";
+// const std::string DATA_LIST_DIR = "../Data/";
+// const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
 
 //const std::string ROI_LIST = "cross_calib_roi_list.txt";
 //const std::string ROI_LIST_DIR = "./";
 
-const std::string OUTPUT_ROOT_FILE = "crosscalibold.root";
+// const std::string OUTPUT_ROOT_FILE = "crosscalibold.root";
 
-const std::string ROI_FILE = "new_detector_roi.txt";
+// const std::string ROI_FILE = "old_detector_roi.txt";
 
 
 
@@ -203,7 +203,7 @@ void calibrate(){
                     my_canvas->Write();
                 }
                 if(save_fit){
-                    hists[file_index]->SetAxisRange(0.98 * roi_low[isotope_type][isotope_peak], 1.02 * roi_high[isotope_type][isotope_peak]);
+                    hists[file_index]->SetAxisRange(0.9 * roi_low[isotope_type][isotope_peak], 1.1 * roi_high[isotope_type][isotope_peak]);
                     hists[file_index]->Draw();
                     ge_fit->Draw("histsame");
                     my_canvas->SaveAs(("../Output/" + canvas_name + ".png").c_str());

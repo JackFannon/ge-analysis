@@ -37,7 +37,7 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
     // Max number of bins that we should read to
     int nbins = hist->GetNbinsX();
 
-    if(inputname.find("newGe") != std::string::npos){
+    if(inputname.find("NewGe") != std::string::npos || inputname.find("newGe") != std::string::npos){
         // WE HAVE DATA FROM THE NEW DETECTOR
         // Need to skip the first 9 lines of the data file as these are all meta-data comments
         for (int i = 1; i < 9; i++) {
@@ -73,7 +73,6 @@ void read_data_into_hist(std::string inputname, TH1F* hist){
         // Have already skipped the only comment line
         // Format of data is as follows:
         // Channel, Count
-        std::cout << "FIRST WORD IS " << firstWord << std::endl;
         if(firstWord == "SPECTRUM"){
             for(int i = 1; i < 9; i++){
                 std::getline(input_data, buffer);
@@ -162,7 +161,7 @@ TF1* fit_peak_ge(TH1F* input_hist, double search_min, double search_max, double*
     //ge_fit->SetRange(search_min, search_max);
 
     TH1F* copy_hist = (TH1F*)input_hist->Clone("copy");
-    copy_hist->SetAxisRange(0.99 * search_min, 1.01 * search_max);
+    copy_hist->SetAxisRange(search_min, search_max);
     // Make a first guess
     double guess_mean = copy_hist->GetMean();
     double guess_sigma = copy_hist->GetRMS();
