@@ -17,3 +17,5 @@ MCGenerator/err/
 MCGenerator/log/
 MCGenerator/script/
 MCGenerator/test6MeV/
+.DS_store
+.dir-locals.el

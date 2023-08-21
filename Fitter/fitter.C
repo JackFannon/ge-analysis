@@ -15,6 +15,11 @@
 #include <string>
 #include <vector>
 
+// OPTIONS FOR CROSS CALIBRATION CHECKING
+//const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/";
+//const double calib_const[2] = {-8.084, 0.1915};
+
+
 //====================================================================================================
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
@@ -23,7 +28,11 @@ const int data_type = 0;
 
 const bool smear_flag = false;
 
-const double calib_const[2] = {-0.166597, 0.148259};
+// New detector main data
+//const double calib_const[2] = {-0.166597, 0.148259};
+
+const double calib_const[2] = {-2.7842, 0.148073};
+
 const double intercept = - calib_const[0]/calib_const[1];
 const double slope = 1.0/calib_const[1];
 const double e_min = 0.001 * intercept;
@@ -31,7 +40,8 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
 const std::vector<float> source_e_true = { 1.4608, 2.6145, 1.1732, 1.3325 };
 
-const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/2023/raw/";
+//const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/NewGeDetector/";
+const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/";
 
 float chi2_min_buffer = 99999.;
 
@@ -288,6 +298,8 @@ void fit_linac(std::string data_filename,
         // Get the histogram of total energy deposition in the Ge detector from the MC file
         TH1F* h_mc = (TH1F*)mc_file->Get("h21");
 
+        h_mc->Draw();
+
         // Smear the MC histogram
         TH1F* h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max);
 
@@ -390,18 +402,26 @@ void fit_linac(std::string data_filename,
         std::cout << "Best fit momentum = "     << p_best[1] << " (MeV)" <<  std::endl;
     }
 
-    std::ofstream ofs("bestfit_momentum_tmp.txt");
-    std::ofstream diff_out("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
-    if(smear_flag){
+    std::ofstream ofs;
+    ofs.open("bestfit_momentum_tmp.txt", std::ios::app);
+
+    std::ofstream diff_out;
+    diff_out.open("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
+
+    /*if(smear_flag){
         ofs << p_best[1];
     }else{
         ofs << p_best[0];
-    }
+    }*/
 
     diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
-    for(int i = 0; i < source_e_true.size(); i++){
+    /*for(int i = 0; i < source_e_true.size(); i++){
         ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
+    }*/
+    ofs << p_best[0];
+    if(smear_flag){
+        ofs << "    " << p_best[1];
     }
     ofs << std::endl;
 

@@ -1,3 +1,7 @@
+#include "TCanvas.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TGraphErrors.h"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -10,11 +14,23 @@
 //====================================================================================================
 
 const std::string DATA_LIST = "newGe_list.txt";
-const std::string DATA_LIST_DIR = "../Data/2023/";
-const std::string DATA_DIR = DATA_LIST_DIR + "raw/";
+const std::string DATA_LIST_DIR = "../Data/";
+const std::string DATA_DIR = DATA_LIST_DIR + "NewGeDetector/";
+const std::string OUTPUT_ROOT_FILE = "histogramsnew.root";
 const std::string ROI_FILE = "roi.txt";
 
-const std::string OUTPUT_ROOT_FILE = "histograms.root";
+// const std::string DATA_LIST = "old_nif_data.txt";
+// const std::string DATA_LIST_DIR = "../Data/";
+// const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
+
+//const std::string ROI_LIST = "cross_calib_roi_list.txt";
+//const std::string ROI_LIST_DIR = "./";
+
+// const std::string OUTPUT_ROOT_FILE = "crosscalibold.root";
+
+// const std::string ROI_FILE = "old_detector_roi.txt";
+
+
 
 const int NUM_OF_ISOTOPES = 4;
 const std::string ISOTOPE_SYMBOLS[NUM_OF_ISOTOPES] = {
@@ -45,15 +61,11 @@ void calibrate(){
     // Set gStyle options, see utilities.C for the function
     set_style(132);
 
-    // Read in the list of files from data_list.txt
+    // Read in the list of files from DATA_LIST in DATA_LIST_DIR
     std::vector<std::string> ge_data_files = load_data(DATA_LIST, DATA_LIST_DIR);
 
     // Open the ROOT file to store output histograms in
     TFile* file = new TFile(OUTPUT_ROOT_FILE.c_str() ,"RECREATE");
-
-    for(std::string file_name: ge_data_files){
-        plot_channel_hist(file_name, DATA_DIR)->Write();
-    }
 
     std::vector<std::vector<int> > isotopes_in_file;
 
@@ -154,9 +166,9 @@ void calibrate(){
 
         hists[file_index] = new TH1F(("h_" + ge_data_files[file_index]).c_str(), (ge_data_files[file_index] + ";Channel;Count").c_str(), nbins, 0, nbins);
 
+
         // Read data out of the file ge_data_files[file_index] into the histogram created above
         read_data_into_hist(DATA_DIR + ge_data_files[file_index], hists[file_index]);
-
         //============================================================================================
         //==================================== FIT THE PEAKS =========================================
         //============================================================================================
@@ -171,16 +183,13 @@ void calibrate(){
                 // Setup a canvas named after the filename, "file type (BG, Co, Ni)" and the peak number
                 std::string canvas_name = ge_data_files[file_index] + ISOTOPE_SYMBOLS[isotope_type] + std::to_string(isotope_peak);
 
-                std::cout << ge_data_files[file_index] << "    " << canvas_name << std::endl;
-
-
                 TCanvas* my_canvas = new TCanvas(canvas_name.c_str(), canvas_name.c_str(), 600, 600);
                 my_canvas->SetTitle(ge_data_files[file_index].c_str());
 
                 // Fit the peak with a gaussian using the information from the region of interest file
-                fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
+                TF1* ge_fit = fit_peak_ge(hists[file_index], roi_low[isotope_type][isotope_peak], roi_high[isotope_type][isotope_peak], &mean, &error);
 
-                // Draw the histogram
+                // Draw the histogram and the fit
                 hists[file_index]->Draw();
 
                 // Store information about the fit (mean and error) and the true energy that the peak should represent
@@ -194,7 +203,9 @@ void calibrate(){
                     my_canvas->Write();
                 }
                 if(save_fit){
-                    hists[file_index]->SetAxisRange(roi_low[isotope_type][isotope_peak] - 50, roi_high[isotope_type][isotope_peak] + 50);
+                    hists[file_index]->SetAxisRange(0.9 * roi_low[isotope_type][isotope_peak], 1.1 * roi_high[isotope_type][isotope_peak]);
+                    hists[file_index]->Draw();
+                    ge_fit->Draw("histsame");
                     my_canvas->SaveAs(("../Output/" + canvas_name + ".png").c_str());
                 }
             }
