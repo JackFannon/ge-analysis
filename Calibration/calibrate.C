@@ -311,7 +311,7 @@ void calibrate(){
         c_calib->SetTitle(ge_data_files[file_index].c_str());
         std::string hist_name = "hcalib_" + ge_data_files[file_index];
 
-        TH1F* hists_calib = new TH1F(hist_name.c_str(), hist_name.c_str(), nbins, e_min, e_max);
+        TH1F *hists_calib = new TH1F(hist_name.c_str(), hist_name.c_str(), nbins, e_min, e_max);
         for (Int_t ibin = 0; ibin < nbins; ibin++) {
             hists_calib->SetBinContent(ibin + 1, hists[file_index]->GetBinContent(ibin + 1));
         }
@@ -327,9 +327,134 @@ void calibrate(){
         //============================================================================================
     }
 
-
-
     file->Close();
     return;
+}
 
+bool newcalibrate() {
+    // Read in the list of files from DATA_LIST in DATA_LIST_DIR
+    std::vector<std::string> ge_data_files = load_data(DATA_LIST, DATA_LIST_DIR);
+
+    // Open output ROOT file
+    TFile *output_file = new TFile(OUTPUT_ROOT_FILE.c_str(), "RECREATE");
+
+    return true;
+}
+
+struct region_of_interest {
+    std::vector<double> true_energy;
+    std::vector<int> lower_bound;
+    std::vector<int> upper_bound;
+    std::vector<int> isotope_type;
+    std::vector<std::string> isotope_name;
+};
+
+region_of_interest read_roi_file(std::string roi_filename) {
+    // Initalise a region_of_interest struct to store roi values in
+    region_of_interest my_roi;
+
+    // Read roi values from the file
+    std::string buffer;
+    std::ifstream roi_data;
+
+    roi_data.open(roi_filename.c_str());
+
+    if (!roi_data.is_open()) {
+        std::cout << "!!!!! Cannot find " << roi_filename << "!!!!!" << std::endl;
+    }
+
+    while (!roi_data.eof()) {
+        std::getline(roi_data, buffer);
+        std::stringstream roi_line(buffer);
+        double true_ene;
+        double ch_low;
+        double ch_high;
+        int type;
+        std::string name;
+        roi_line >> true_ene >> ch_low >> ch_high >> type >> name;
+        my_roi.true_energy.push_back(true_ene);
+        my_roi.upper_bound.push_back(ch_high);
+        my_roi.lower_bound.push_back(ch_low);
+        my_roi.isotope_type.push_back(type);
+        my_roi.isotope_name.push_back(name);
+    }
+    return my_roi;
+}
+
+bool newcalibrate() {
+    // Read in the list of files from DATA_LIST in DATA_LIST_DIR
+    std::vector<std::string> ge_data_files = load_data(DATA_LIST, DATA_LIST_DIR);
+
+    std::vector<region_of_interest> roi_vect;
+
+    // Open output ROOT file
+    TFile *output_file = new TFile(OUTPUT_ROOT_FILE.c_str(), "RECREATE");
+
+    // Histogram vectors
+    //     raw counts vs channel number
+    std::vector<TH1F *> hist_vect_raw_counts;
+
+    // Loop over the files
+    std::ifstream data_list;
+    data_list.open((DATA_LIST_DIR + DATA_LIST).c_str());
+
+    if (!data_list.is_open()) {
+        std::cerr << "Could not open " << DATA_LIST_DIR + DATA_LIST << std::endl;
+        return false;
+    }
+
+    std::string data_list_buffer;
+    while (!data_list.eof()) {
+        // Read the line with the filename from the file
+        std::getline(data_list, data_list_buffer);
+        std::stringstream data_list_line(data_list_buffer);
+        std::string data_file_name;
+        std::string roi_file_name;
+        data_list_line >> data_file_name >> roi_file_name;
+
+        // Create and fill the histogram of raw counts vs channel
+        TH1F *counts_channel_hist;
+        read_data_into_hist(data_file_name, counts_channel_hist);
+
+        // Get the contents of the region of interest (roi) file
+        region_of_interest roi = read_roi_file(roi_file_name);
+
+        // Create vectors to store the fit, the fit mean and the fit error
+        std::vector<TF1 *> peak_vect;
+        std::vector<double> peak_mean_vect;
+        std::vector<double> peak_error_vect;
+
+        // Create TTree for this file
+        TTree *peak_tree = new TTree(data_file_name.c_str(), "Tree for peak fits");
+
+        // Fit all of the roi peaks
+        for (int isotope = 0; isotope < roi.true_energy.size(); isotope++) {
+            double peak_mean;
+            double peak_error;
+            TF1 *peak_fit =
+                fit_peak_ge(counts_channel_hist, roi.lower_bound[isotope], roi.upper_bound[isotope], &peak_mean, &peak_error);
+            peak_vect.push_back(peak_fit);
+            peak_mean_vect.push_back(peak_mean);
+            peak_error_vect.push_back(peak_error);
+
+            // Create a canvas and draw the histogram and fit
+            TCanvas *isotope_canvas = new TCanvas(roi.isotope_name[isotope].c_str(), "", 600, 600);
+
+            // Branch to store the histograms in for this file
+            peak_tree->Branch(roi.isotope_name[isotope].c_str(), "", &isotope_canvas);
+            isotope_canvas->cd();
+
+            counts_channel_hist->SetAxisRange(0.9 * roi.lower_bound[isotope], 1.1 * roi.upper_bound[isotope]);
+            counts_channel_hist->Draw();
+            peak_fit->Draw("same");
+
+            peak_tree->Fill();
+            delete isotope_canvas;
+            delete peak_fit;
+        }
+        peak_tree->Write();
+    }
+
+    output_file->Close();
+    return true;
 }
