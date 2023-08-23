@@ -4,7 +4,6 @@ all_headers.h
 *.png
 Data/
 Output/
-*.txt
 2021Analysis
 *.pdf
 *.hbk
@@ -19,3 +18,5 @@ MCGenerator/script/
 MCGenerator/test6MeV/
 .DS_store
 .dir-locals.el
+.clang-format
+*#
