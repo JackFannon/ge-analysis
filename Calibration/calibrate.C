@@ -16,22 +16,10 @@
 //======================================== CONFIG OPTIONS ============================================
 //====================================================================================================
 
-const std::string DATA_LIST_DIR = "/Users/jack/Software/GeAnalysis/Configs/";
-const std::string DATA_LIST = "newGe_list.txt";
+const std::string DATA_LIST = "/Users/jack/Software/GeAnalysis/Configs/newGe_list.txt";
 
 // Set the number of bins for the detector
 const int nbins = 4096;
-
-// const std::string DATA_LIST = "old_nif_data.txt";
-// const std::string DATA_LIST_DIR = "../Data/";
-// const std::string DATA_DIR = DATA_LIST_DIR + "CrossCalibration/";
-
-// const std::string ROI_LIST = "cross_calib_roi_list.txt";
-// const std::string ROI_LIST_DIR = "./";
-
-// const std::string OUTPUT_ROOT_FILE = "crosscalibold.root";
-
-// const std::string ROI_FILE = "old_detector_roi.txt";
 
 //====================================================================================================
 //====================================================================================================
@@ -81,7 +69,8 @@ region_of_interest read_roi_file(std::string roi_filename) {
 }
 
 bool calibrate() {
-    // Open output ROOT file
+    // Set ROOT style options
+    set_style(132);
 
     // Histogram vectors
     //     raw counts vs channel number
@@ -89,10 +78,10 @@ bool calibrate() {
 
     // Loop over the files
     std::ifstream data_list;
-    data_list.open((DATA_LIST_DIR + DATA_LIST).c_str());
+    data_list.open((DATA_LIST).c_str());
 
     if (!data_list.is_open()) {
-        std::cerr << "Could not open " << DATA_LIST_DIR + DATA_LIST << std::endl;
+        std::cerr << "Could not open " << DATA_LIST << std::endl;
         return false;
     }
 

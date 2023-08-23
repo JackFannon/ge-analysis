@@ -16,12 +16,11 @@
 #include <vector>
 
 // OPTIONS FOR CROSS CALIBRATION CHECKING
-// const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/";
 // const double calib_const[2] = {-8.084, 0.1915};
 
-//====================================================================================================
-//======================================== CONFIG OPTIONS ============================================
-//====================================================================================================
+//==========================================================================================================================
+//======================================== CONFIG OPTIONS ==================================================================
+//==========================================================================================================================
 const int nbins = 4096;
 const int data_type = 0;
 
@@ -39,18 +38,11 @@ const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
 const std::vector<float> source_e_true = {1.4608, 2.6145, 1.1732, 1.3325};
 
-// const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/NewGeDetector/";
-const std::string DATA_DIRECTORY = "/Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/";
-
 float chi2_min_buffer = 99999.;
 
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
-
-//====================================================================================================
-//=============================== CALCULATE CHI2 BETWEEN MC AND DATA =================================
-//====================================================================================================
+//==========================================================================================================================
+//=============================== CALCULATE CHI2 BETWEEN MC AND DATA =======================================================
+//==========================================================================================================================
 float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::string output_filename, bool plot_flag = false) {
     // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
@@ -141,13 +133,10 @@ float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::strin
 
     return chi2;
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
 
-//====================================================================================================
-//============================ APPLY Ni CALIBRATION TO OTHER DATA FILES ==============================
-//====================================================================================================
+//==========================================================================================================================
+//============================ APPLY Ni CALIBRATION TO OTHER DATA FILES ====================================================
+//==========================================================================================================================
 TH1F *apply_calibration(std::string raw_data_filename) {
     // Histogram for raw data
     TH1F *h_data_raw = new TH1F("h_data", "h_data", nbins, 0, nbins);
@@ -173,13 +162,10 @@ TH1F *apply_calibration(std::string raw_data_filename) {
 
     return h_data_calib;
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
 
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
+//==========================================================================================================================
+//=================================== SETUP LEGEND =========================================================================
+//==========================================================================================================================
 void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, double energy, double momentum, float chi2) {
     leg->SetFillColor(0);
     leg->AddEntry(input_hist, legend_label.c_str(), "1");
@@ -193,13 +179,10 @@ void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, doub
     momentum_label->Draw();
     chi2_label->Draw();
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
 
-//====================================================================================================
-//============================== CALCULATE SMEARING ==================================================
-//====================================================================================================
+//==========================================================================================================================
+//============================== CALCULATE SMEARING ========================================================================
+//==========================================================================================================================
 TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size()], double fit_e_min, double fit_e_max) {
     // Intialise histogram to store smeared MC
     TH1F *h_mc_smeared = new TH1F("smeared_mc", "smeared_mc", nbins, e_min, e_max);
@@ -223,9 +206,6 @@ TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size(
 
     return h_mc_smeared;
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
 
 void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, double fit_e_min, double fit_e_max,
                std::string output_filename, int beam_energy, std::string xpos, std::string zpos) {
@@ -386,18 +366,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
     std::ofstream diff_out;
     diff_out.open("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
 
-    /*if(smear_flag){
-        ofs << p_best[1];
-    }else{
-        ofs << p_best[0];
-    }*/
-
     diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t"
              << chi2[0] << std::endl;
 
-    /*for(int i = 0; i < source_e_true.size(); i++){
-        ofs << "\t" << source_e_mean[i] << "\t" << source_e_error[i];
-    }*/
     ofs << p_best[0];
     if (smear_flag) {
         ofs << "    " << p_best[1];
@@ -416,13 +387,10 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
 
     file_mc->Close();
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================
 
-//====================================================================================================
-//========================= MACRO ENTRANCE -- WRAPPER FOR FIT_LINAC ==================================
-//====================================================================================================
+//==========================================================================================================================
+//========================= MACRO ENTRANCE -- WRAPPER FOR FIT_LINAC ========================================================
+//==========================================================================================================================
 void fitter(std::string data_info, std::string output_filename) {
     // Information required by the fitting function above is as follows:
     // std::string data_filename   - Filename of Ge detector data
@@ -443,6 +411,7 @@ void fitter(std::string data_info, std::string output_filename) {
     std::string approx_x;
     std::string approx_z;
     std::string filename;
+    std::string output_name;
     int min_mc_energy;
     int max_mc_energy;
     float min_data_energy;
@@ -471,7 +440,7 @@ void fitter(std::string data_info, std::string output_filename) {
         std::istringstream buffer(line);
 
         // Load information into local variables
-        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> min_mc_energy >>
+        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> output_name >> min_mc_energy >>
             max_mc_energy >> min_data_energy >> max_data_energy;
 
         // Create a string that matches the input data filename, but without the ".csv" on the end
@@ -481,12 +450,9 @@ void fitter(std::string data_info, std::string output_filename) {
         }
 
         // Call fit_linac to find the best match between MC and data
-        fit_linac(DATA_DIRECTORY + filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy,
-                  output_filename + filename_wo_csv, approx_energy, approx_x, approx_z);
+        fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_name,
+                  approx_energy, approx_x, approx_z);
     }
 
     return;
 }
-//====================================================================================================
-//====================================================================================================
-//====================================================================================================

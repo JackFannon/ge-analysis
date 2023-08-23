@@ -117,13 +117,6 @@ void read_data_into_hist(std::string inputname, TH1F *hist) {
             }
         }
     }
-    TCanvas *tc = new TCanvas("", "", 1200, 600);
-
-    std::string outputname = inputname.substr(inputname.find_last_of('/') + 1);
-    // outputname = outputname.substr(0, outputname.size() - outputname.find_last_of("Ge") - 2);
-    tc->cd();
-    hist->Draw();
-    tc->SaveAs(("Output/" + outputname + "_channel_hist" + ".root").c_str());
 }
 
 // Sets the drawing style
