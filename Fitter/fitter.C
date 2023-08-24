@@ -246,9 +246,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
         std::string mc_filename;
         // Open MC file
         if (x >= 10000) {
-            mc_filename = "../MC/" + std::to_string(x) + ".root";
+            mc_filename = "../MC/CrossCalibration/OldDetector/" + std::to_string(x) + ".root";
         } else {
-            mc_filename = "../MC/0" + std::to_string(x) + ".root";
+            mc_filename = "../MC/CrossCalibration/OldDetector/0" + std::to_string(x) + ".root";
         }
 
         // TFile for the MC root file
@@ -333,9 +333,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
 
     // TFile for the MC root file
     if (x_best[0] >= 10000) {
-        mc_filename = "../MC/" + std::to_string(x_best[0]) + ".root";
+        mc_filename = "../MC/CrossCalibration/OldDetector/" + std::to_string(x_best[0]) + ".root";
     } else {
-        mc_filename = "../MC/0" + std::to_string(x_best[0]) + ".root";
+        mc_filename = "../MC/CrossCalibration/OldDetector/0" + std::to_string(x_best[0]) + ".root";
     }
 
     TFile *file_mc = new TFile(mc_filename.c_str(), "READ");
