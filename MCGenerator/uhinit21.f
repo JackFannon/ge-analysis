@@ -12,8 +12,8 @@ c     parameter (offset=36.379)
 c     parameter (slope=5.2230)
 c     S.Shima: Updating the calibrtion parameters using the 2021 data
 c     Aug. 29, 2021      
-      parameter (offset=-8.084)
-      parameter (slope=0.1915)
+      parameter (offset=42.2262)
+      parameter (slope=5.22317)
 
       hmin = offset/1000.
       hmax = (slope*4096.+offset)/1000.
