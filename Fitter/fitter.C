@@ -213,7 +213,8 @@ TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size(
 }
 
 void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, double fit_e_min, double fit_e_max,
-               std::string output_filename, int beam_energy, std::string xpos, std::string zpos) {
+               std::string output_filename, int beam_energy, std::string xpos, std::string zpos,
+               float calib_const[2]) {
 
     std::vector<float> chi2;
 
@@ -422,6 +423,8 @@ void fitter(std::string data_info, std::string output_filename) {
     int max_mc_energy;
     float min_data_energy;
     float max_data_energy;
+    float calib_p0;
+    float calib_p1;
 
     // Load in the input file list
     std::ifstream input_file(data_info);
