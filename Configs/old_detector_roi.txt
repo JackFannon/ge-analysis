@@ -1,0 +1,18 @@
+#true_energy    channel_low     channel_high    source_type    source_name
+1460.8          266             276             0              K40          // K40   (background data)
+2614.5          486             498             0              Tl208        // Tl208 (background data)
+1173.2          214             220             1              Co60         // Co60
+1332.5          242             252             1              Co60         // Co60
+2224.61         415             420             3              Ni-Cf        // Ni-Cf (n+p->d+gamma)
+5816.162       1100            1110             3              Ni-Cf        // Ni-Cf
+6327.161       1200            1207             3              Ni-Cf        // Ni-Cf
+6798.252       1290            1296             3              Ni-Cf        // Ni-Cf
+6838.16        1298            1304             3              Ni-Cf        // Ni-Cf
+7309.251       1388            1394             3              Ni-Cf        // Ni-Cf
+7512.142       1427            1433             3              Ni-Cf        // Ni-Cf
+7820.25        1486            1492             3              Ni-Cf        // Ni-Cf
+7977.102       1514            1522             3              Ni-Cf        // Ni-Cf
+8023.141       1524            1532             3              Ni-Cf        // Ni-Cf
+8488.101       1612            1620             3              Ni-Cf        // Ni-Cf
+8534.14        1622            1630             3              Ni-Cf        // Ni-Cf
+8999.1         1711            1720             3              Ni-Cf        // Ni-Cf

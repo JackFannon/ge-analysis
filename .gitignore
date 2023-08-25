@@ -20,3 +20,5 @@ MCGenerator/test6MeV/
 .dir-locals.el
 .clang-format
 *#
+compile_flags.txt
+.dir-locals.el
