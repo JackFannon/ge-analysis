@@ -157,8 +157,6 @@ TF1 *fit_peak_ge(TH1F *input_hist, double search_min, double search_max, double 
     double guess_mean = copy_hist->GetMean();
     double guess_sigma = copy_hist->GetRMS();
 
-    std::cout << guess_mean << std::endl;
-
     ge_fit->SetParLimits(1, 0.99 * guess_mean, 1.01 * guess_mean);
     ge_fit->SetParameter(1, guess_mean);
     ge_fit->SetParameter(2, guess_sigma);
@@ -200,7 +198,8 @@ TH1F *plot_channel_hist(std::string inputFile, std::string directory) {
         std::getline(input_data, buffer);
     }
 
-    // String to store the channel number in (this is not used, but is good to be named something other than "useless variable")
+    // String to store the channel number in (this is not used, but is good to be named something other than
+    // "useless variable")
     int channel;
 
     // Format of data is as follows:
@@ -216,7 +215,6 @@ TH1F *plot_channel_hist(std::string inputFile, std::string directory) {
 
         std::string token;
         // Load the channel number from "line" into "channel"
-
         line >> channel;
         // Loop over the remaining RSV numbers in the line
         for (int i = 0; i < 10; i++) {
