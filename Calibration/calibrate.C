@@ -101,9 +101,16 @@ bool calibrate() {
             continue;
         }
 
+        TCanvas *counts_channel_canvas = new TCanvas("Raw counts", "", 600, 600);
+        counts_channel_canvas->cd();
+
         // Create and fill the histogram of raw counts vs channel
         TH1F *counts_channel_hist = new TH1F("", "", nbins, 0, nbins);
         read_data_into_hist(data_file_name, counts_channel_hist);
+        counts_channel_hist->Draw();
+
+        counts_channel_canvas->Write();
+        delete counts_channel_canvas;
 
         // Get the contents of the region of interest (roi) file
         region_of_interest roi = read_roi_file(roi_file_name);
@@ -133,7 +140,6 @@ bool calibrate() {
             counts_channel_hist->Draw();
             peak_fit->Draw("same");
             isotope_canvas->Write();
-            output_file->Write();
             delete isotope_canvas;
         }
 
