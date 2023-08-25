@@ -124,8 +124,8 @@ bool calibrate() {
         for (int isotope = 0; isotope < roi.true_energy.size(); isotope++) {
             double peak_mean;
             double peak_error;
-            TF1 *peak_fit =
-                fit_peak_ge(counts_channel_hist, roi.lower_bound[isotope], roi.upper_bound[isotope], &peak_mean, &peak_error);
+            TF1 *peak_fit = fit_peak_ge(counts_channel_hist, roi.lower_bound[isotope], roi.upper_bound[isotope],
+                                        &peak_mean, &peak_error);
             peak_vect.push_back(peak_fit);
             peak_mean_vect.push_back(peak_mean);
             peak_error_vect.push_back(peak_error);
