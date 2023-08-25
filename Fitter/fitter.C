@@ -205,6 +205,7 @@ void fit_linac(std::string data_filename, int x_min, int x_max, double fit_e_min
                std::string mc_path, std::string output_filename, int beam_energy, std::string xpos,
                std::string zpos, float e_min, float e_max) {
 
+
     std::vector<float> chi2;
 
     TCanvas *my_canvas = new TCanvas("my_canvas", "my_canvas", 600, 600);
