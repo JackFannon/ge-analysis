@@ -18,9 +18,9 @@
 // OPTIONS FOR CROSS CALIBRATION CHECKING
 // const double calib_const[2] = {-8.084, 0.1915};
 
-//==========================================================================================================================
-//======================================== CONFIG OPTIONS ==================================================================
-//==========================================================================================================================
+//=================================================================================================================
+//======================================== CONFIG OPTIONS =========================================================
+//=================================================================================================================
 const int nbins = 4096;
 const int data_type = 0;
 
@@ -40,10 +40,11 @@ const std::vector<float> source_e_true = {1.4608, 2.6145, 1.1732, 1.3325};
 
 float chi2_min_buffer = 99999.;
 
-//==========================================================================================================================
-//=============================== CALCULATE CHI2 BETWEEN MC AND DATA =======================================================
-//==========================================================================================================================
-float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::string output_filename, bool plot_flag = false) {
+//=================================================================================================================
+//=============================== CALCULATE CHI2 BETWEEN MC AND DATA ==============================================
+//=================================================================================================================
+float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::string output_filename,
+                bool plot_flag = false) {
     // Find bin range where the LINAC peak should be
     int bin_min = h_data->FindBin(e_min);
     int bin_max = h_data->FindBin(e_max);
@@ -59,7 +60,8 @@ float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::strin
     double xmax_data = h_data->GetXaxis()->GetXmax();
     double xmax_mc = h_mc->GetXaxis()->GetXmax();
     std::cout << "consistency check: " << xmax_data << " " << xmax_mc << std::endl;
-    std::cout << "consistency check: " << h_data->GetXaxis()->GetXmin() << " " << h_mc->GetXaxis()->GetXmin() << std::endl;
+    std::cout << "consistency check: " << h_data->GetXaxis()->GetXmin() << " " << h_mc->GetXaxis()->GetXmin()
+              << std::endl;
 
     double hist_x_min = e_min - 0.1;
     double hist_x_max = e_max + 0.05;
@@ -124,7 +126,8 @@ float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::strin
         std::cout << "chi2/NDF = " << chi2 << " / " << ndf - 1 << std::endl;
     }
 
-    std::cout << "MIN =========================== " << chi2_min_buffer << " chi2 ===================== " << chi2 << std::endl;
+    std::cout << "MIN =========================== " << chi2_min_buffer << " chi2 ===================== " << chi2
+              << std::endl;
     if (chi2_min_buffer == 0 || chi2_min_buffer > chi2) {
         chi2_min_buffer = chi2;
         c1->Print((output_filename + ".pdf").c_str());
@@ -134,9 +137,9 @@ float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::strin
     return chi2;
 }
 
-//==========================================================================================================================
-//============================ APPLY Ni CALIBRATION TO OTHER DATA FILES ====================================================
-//==========================================================================================================================
+//=================================================================================================================
+//==================================== APPLY Ni CALIBRATION TO OTHER DATA FILES ===================================
+//=================================================================================================================
 TH1F *apply_calibration(std::string raw_data_filename) {
     // Histogram for raw data
     TH1F *h_data_raw = new TH1F("h_data", "h_data", nbins, 0, nbins);
@@ -163,10 +166,11 @@ TH1F *apply_calibration(std::string raw_data_filename) {
     return h_data_calib;
 }
 
-//==========================================================================================================================
-//=================================== SETUP LEGEND =========================================================================
-//==========================================================================================================================
-void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, double energy, double momentum, float chi2) {
+//=================================================================================================================
+//============================================== SETUP LEGEND =====================================================
+//=================================================================================================================
+void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, double energy, double momentum,
+                  float chi2) {
     leg->SetFillColor(0);
     leg->AddEntry(input_hist, legend_label.c_str(), "1");
     TLatex *energy_label = new TLatex(0.15, 0.8, Form("E_{tot} = %4.3f MeV", energy));
@@ -180,10 +184,11 @@ void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, doub
     chi2_label->Draw();
 }
 
-//==========================================================================================================================
-//============================== CALCULATE SMEARING ========================================================================
-//==========================================================================================================================
-TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size()], double fit_e_min, double fit_e_max) {
+//=================================================================================================================
+//================================================ CALCULATE SMEARING =============================================
+//=================================================================================================================
+TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size()], double fit_e_min,
+               double fit_e_max) {
     // Intialise histogram to store smeared MC
     TH1F *h_mc_smeared = new TH1F("smeared_mc", "smeared_mc", nbins, e_min, e_max);
 
@@ -226,7 +231,8 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0; i < source_e_true.size(); i++) {
         std::cout << source_e_true[i] << std::endl;
-        fit_peak_ge(h_data_calib, 0.991 * source_e_true[i], 1.009 * source_e_true[i], &source_e_mean[i], &source_e_error[i]);
+        fit_peak_ge(h_data_calib, 0.991 * source_e_true[i], 1.009 * source_e_true[i], &source_e_mean[i],
+                    &source_e_error[i]);
     }
 
     std::vector<double> chi2_vec;
@@ -366,8 +372,8 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
     std::ofstream diff_out;
     diff_out.open("diff_default_smeared_w_new_nicalib.txt", std::ios::app);
 
-    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t" << 0.001 * x_best[1] << "\t"
-             << chi2[0] << std::endl;
+    diff_out << xpos << " \t" << zpos << "\t" << beam_energy << "\t" << 0.001 * x_best[0] << "\t"
+             << 0.001 * x_best[1] << "\t" << chi2[0] << std::endl;
 
     ofs << p_best[0];
     if (smear_flag) {
@@ -388,9 +394,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
     file_mc->Close();
 }
 
-//==========================================================================================================================
-//========================= MACRO ENTRANCE -- WRAPPER FOR FIT_LINAC ========================================================
-//==========================================================================================================================
+//=================================================================================================================
+//=================================== MACRO ENTRANCE -- WRAPPER FOR FIT_LINAC =====================================
+//=================================================================================================================
 void fitter(std::string data_info, std::string output_filename) {
     // Information required by the fitting function above is as follows:
     // std::string data_filename   - Filename of Ge detector data
@@ -440,8 +446,11 @@ void fitter(std::string data_info, std::string output_filename) {
         std::istringstream buffer(line);
 
         // Load information into local variables
-        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> output_name >> min_mc_energy >>
-            max_mc_energy >> min_data_energy >> max_data_energy;
+        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> output_name >>
+            min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy >> calib_p0 >> calib_p1;
+
+        // Store calibration constants in an array
+        float calib_const[2] = {calib_p0, calib_p1};
 
         // Create a string that matches the input data filename, but without the ".csv" on the end
         std::string filename_wo_csv;
@@ -451,7 +460,7 @@ void fitter(std::string data_info, std::string output_filename) {
 
         // Call fit_linac to find the best match between MC and data
         fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_name,
-                  approx_energy, approx_x, approx_z);
+                  approx_energy, approx_x, approx_z, calib_const);
     }
 
     return;
