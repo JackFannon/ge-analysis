@@ -22,19 +22,8 @@
 //======================================== CONFIG OPTIONS =========================================================
 //=================================================================================================================
 const int nbins = 4096;
-const int data_type = 0;
 
 const bool smear_flag = false;
-
-// New detector main data
-// const double calib_const[2] = {-0.166597, 0.148259};
-
-const double calib_const[2] = {-2.7842, 0.148073};
-
-const double intercept = -calib_const[0] / calib_const[1];
-const double slope = 1.0 / calib_const[1];
-const double e_min = 0.001 * intercept;
-const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
 const std::vector<float> source_e_true = {1.4608, 2.6145, 1.1732, 1.3325};
 
@@ -140,7 +129,7 @@ float calc_chi2(TH1F *h_data, TH1F *h_mc, double e_min, double e_max, std::strin
 //=================================================================================================================
 //==================================== APPLY Ni CALIBRATION TO OTHER DATA FILES ===================================
 //=================================================================================================================
-TH1F *apply_calibration(std::string raw_data_filename) {
+TH1F *apply_calibration(std::string raw_data_filename, float e_min, float e_max) {
     // Histogram for raw data
     TH1F *h_data_raw = new TH1F("h_data", "h_data", nbins, 0, nbins);
 
@@ -188,7 +177,7 @@ void setup_legend(TLegend *leg, TH1F *input_hist, std::string legend_label, doub
 //================================================ CALCULATE SMEARING =============================================
 //=================================================================================================================
 TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size()], double fit_e_min,
-               double fit_e_max) {
+               double fit_e_max, float e_min, float e_max) {
     // Intialise histogram to store smeared MC
     TH1F *h_mc_smeared = new TH1F("smeared_mc", "smeared_mc", nbins, e_min, e_max);
 
@@ -213,8 +202,8 @@ TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size(
 }
 
 void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, double fit_e_min, double fit_e_max,
-               std::string output_filename, int beam_energy, std::string xpos, std::string zpos,
-               float calib_const[2]) {
+               std::string output_filename, int beam_energy, std::string xpos, std::string zpos, float e_min,
+               float e_max) {
 
     std::vector<float> chi2;
 
@@ -227,7 +216,7 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
     double source_e_mean[source_e_true.size()];
     double source_e_error[source_e_true.size()];
 
-    TH1F *h_data_calib = apply_calibration(data_filename);
+    TH1F *h_data_calib = apply_calibration(data_filename, e_min, e_max);
 
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0; i < source_e_true.size(); i++) {
@@ -267,7 +256,7 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
         h_mc->Draw();
 
         // Smear the MC histogram
-        TH1F *h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max);
+        TH1F *h_mc_smeared = smear_mc(h_mc, x, source_e_error, fit_e_min, fit_e_max, e_min, e_max);
 
         // Energy in MeV
         double etot = 0.001 * (double)x;
@@ -352,7 +341,7 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
 
     TH1F *h_smc = new TH1F("smearing", "smearing", nbins, e_min, e_max);
     if (smear_flag) {
-        smear_mc(h_mc, x_best[0], source_e_error, fit_e_min, fit_e_max);
+        smear_mc(h_mc, x_best[0], source_e_error, fit_e_min, fit_e_max, e_min, e_max);
     }
 
     chi2.push_back(calc_chi2(h_data_calib, h_mc, fit_e_min, fit_e_max, output_filename, true));
@@ -452,8 +441,11 @@ void fitter(std::string data_info, std::string output_filename) {
         buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> output_name >>
             min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy >> calib_p0 >> calib_p1;
 
-        // Store calibration constants in an array
-        float calib_const[2] = {calib_p0, calib_p1};
+        // Calulate minimum and maximum energy from the calibration git
+        const double intercept = -calib_p0 / calib_p1;
+        const double slope = 1.0 / calib_p1;
+        const double e_min = 0.001 * intercept;
+        const double e_max = 0.001 * (intercept + (double)nbins * slope);
 
         // Create a string that matches the input data filename, but without the ".csv" on the end
         std::string filename_wo_csv;
@@ -463,7 +455,7 @@ void fitter(std::string data_info, std::string output_filename) {
 
         // Call fit_linac to find the best match between MC and data
         fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_name,
-                  approx_energy, approx_x, approx_z, calib_const);
+                  approx_energy, approx_x, approx_z, e_min, e_max);
     }
 
     return;
