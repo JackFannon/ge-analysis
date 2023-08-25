@@ -201,9 +201,9 @@ TH1F *smear_mc(TH1F *h_mc, int energy, double source_e_error[source_e_true.size(
     return h_mc_smeared;
 }
 
-void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, double fit_e_min, double fit_e_max,
-               std::string output_filename, int beam_energy, std::string xpos, std::string zpos, float e_min,
-               float e_max) {
+void fit_linac(std::string data_filename, int x_min, int x_max, double fit_e_min, double fit_e_max,
+               std::string mc_path, std::string output_filename, int beam_energy, std::string xpos,
+               std::string zpos, float e_min, float e_max) {
 
     std::vector<float> chi2;
 
@@ -220,7 +220,6 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
 
     // Fit the Co60, K40 and Tl208 peaks from each data file.
     for (int i = 0; i < source_e_true.size(); i++) {
-        std::cout << source_e_true[i] << std::endl;
         fit_peak_ge(h_data_calib, 0.991 * source_e_true[i], 1.009 * source_e_true[i], &source_e_mean[i],
                     &source_e_error[i]);
     }
@@ -242,9 +241,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
         std::string mc_filename;
         // Open MC file
         if (x >= 10000) {
-            mc_filename = "../MC/CrossCalibration/OldDetector/" + std::to_string(x) + ".root";
+            mc_filename = mc_path + std::to_string(x) + ".root";
         } else {
-            mc_filename = "../MC/CrossCalibration/OldDetector/0" + std::to_string(x) + ".root";
+            mc_filename = mc_path + "0" + std::to_string(x) + ".root";
         }
 
         // TFile for the MC root file
@@ -329,9 +328,9 @@ void fit_linac(std::string data_filename, int data_type, int x_min, int x_max, d
 
     // TFile for the MC root file
     if (x_best[0] >= 10000) {
-        mc_filename = "../MC/CrossCalibration/OldDetector/" + std::to_string(x_best[0]) + ".root";
+        mc_filename = mc_path + std::to_string(x_best[0]) + ".root";
     } else {
-        mc_filename = "../MC/CrossCalibration/OldDetector/0" + std::to_string(x_best[0]) + ".root";
+        mc_filename = mc_path + "0" + std::to_string(x_best[0]) + ".root";
     }
 
     TFile *file_mc = new TFile(mc_filename.c_str(), "READ");
@@ -401,12 +400,11 @@ void fitter(std::string data_info, std::string output_filename) {
     // std::string zpos            - Approximate z position of beam
 
     // Intialise variables to read out the runlist file:
-    int run_number;
     int approx_energy;
-    int data_type;
     std::string approx_x;
     std::string approx_z;
     std::string filename;
+    std::string mc_path;
     std::string output_name;
     int min_mc_energy;
     int max_mc_energy;
@@ -438,8 +436,8 @@ void fitter(std::string data_info, std::string output_filename) {
         std::istringstream buffer(line);
 
         // Load information into local variables
-        buffer >> run_number >> approx_energy >> data_type >> approx_x >> approx_z >> filename >> output_name >>
-            min_mc_energy >> max_mc_energy >> min_data_energy >> max_data_energy >> calib_p0 >> calib_p1;
+        buffer >> approx_energy >> approx_x >> approx_z >> filename >> mc_path >> output_name >> min_mc_energy >>
+            max_mc_energy >> min_data_energy >> max_data_energy >> calib_p0 >> calib_p1;
 
         // Calulate minimum and maximum energy from the calibration git
         const double intercept = -calib_p0 / calib_p1;
@@ -454,7 +452,7 @@ void fitter(std::string data_info, std::string output_filename) {
         }
 
         // Call fit_linac to find the best match between MC and data
-        fit_linac(filename, data_type, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, output_name,
+        fit_linac(filename, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, mc_path, output_name,
                   approx_energy, approx_x, approx_z, e_min, e_max);
     }
 
