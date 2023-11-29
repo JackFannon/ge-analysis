@@ -2,7 +2,6 @@
 all_headers.h
 *.root
 *.png
-Data/
 Output/
 2021Analysis
 *.pdf
