@@ -7,6 +7,7 @@
 #include "TVirtualPad.h"
 #include "utilities.C"
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -89,7 +90,14 @@ bool calibrate() {
     while (!data_list.eof()) {
         // Read the line with the filename from the file
         std::getline(data_list, data_list_buffer);
+
         std::stringstream data_list_line(data_list_buffer);
+
+        // Skip the line if it is empty or a comment
+        if (data_list_buffer.empty() || data_list_buffer[0] == '#') {
+            continue;
+        }
+
         std::string output_file_name;
         std::string data_file_name;
         std::string roi_file_name;
