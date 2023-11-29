@@ -386,7 +386,7 @@ void fit_linac(std::string data_filename, int x_min, int x_max, double fit_e_min
 //=================================================================================================================
 //=================================== MACRO ENTRANCE -- WRAPPER FOR FIT_LINAC =====================================
 //=================================================================================================================
-void fitter(std::string data_info, std::string output_filename) {
+void fitter(std::string data_info) {
     // Information required by the fitting function above is as follows:
     // std::string data_filename   - Filename of Ge detector data
     //         int data_type       - Type of data (refers to the type of detector)
@@ -399,19 +399,21 @@ void fitter(std::string data_info, std::string output_filename) {
     // std::string xpos            - Approximate x position of beam
     // std::string zpos            - Approximate z position of beam
 
+    std::string input_path;
+    std::string output_path;
+    std::string mc_path;
+    float calib_p0;
+    float calib_p1;
+
     // Intialise variables to read out the runlist file:
     int approx_energy;
     std::string approx_x;
     std::string approx_z;
     std::string filename;
-    std::string mc_path;
-    std::string output_name;
     int min_mc_energy;
     int max_mc_energy;
     float min_data_energy;
     float max_data_energy;
-    float calib_p0;
-    float calib_p1;
 
     // Load in the input file list
     std::ifstream input_file(data_info);
@@ -431,13 +433,44 @@ void fitter(std::string data_info, std::string output_filename) {
         if (line.empty() || line[0] == '#') {
             continue;
         }
+        // Check if the line starts with the words "MC_DIRECTORY"
+        if (line.substr(0, 13) == "MC_DIRECTORY=") {
+            // If so, set the MC directory to the rest of the line
+            mc_path = line.substr(13);
+            continue;
+        }
+        // Check if the line starts with the words "INPUT_DIRECTORY"
+        if (line.substr(0, 16) == "INPUT_DIRECTORY=") {
+            // If so, set the input directory to the rest of the line
+            std::cout << "test";
+            input_path = line.substr(16);
+            continue;
+        }
+        // Check if the line starts with the words "OUTPUT_DIRECTORY"
+        if (line.substr(0, 17) == "OUTPUT_DIRECTORY=") {
+            // If so, set the output directory to the rest of the line
+            output_path = line.substr(17);
+            continue;
+        }
+        // Check if the line starts with the words "CALIB_CONST_1"
+        if (line.substr(0, 14) == "CALIB_CONST_1=") {
+            // If so, set the first calibration constant to the rest of the line
+            calib_p0 = std::stof(line.substr(14));
+            continue;
+        }
+        // Check if the line starts with the words "CALIB_CONST_2"
+        if (line.substr(0, 14) == "CALIB_CONST_2=") {
+            // If so, set the second calibration constant to the rest of the line
+            calib_p1 = std::stof(line.substr(14));
+            continue;
+        }
 
         // Buffer to convert between string and the variables
         std::istringstream buffer(line);
 
         // Load information into local variables
-        buffer >> approx_energy >> approx_x >> approx_z >> filename >> mc_path >> output_name >> min_mc_energy >>
-            max_mc_energy >> min_data_energy >> max_data_energy >> calib_p0 >> calib_p1;
+        buffer >> approx_energy >> approx_x >> approx_z >> filename >> min_mc_energy >> max_mc_energy >>
+            min_data_energy >> max_data_energy;
 
         // Calulate minimum and maximum energy from the calibration git
         const double intercept = -calib_p0 / calib_p1;
@@ -452,8 +485,8 @@ void fitter(std::string data_info, std::string output_filename) {
         }
 
         // Call fit_linac to find the best match between MC and data
-        fit_linac(filename, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, mc_path, output_name,
-                  approx_energy, approx_x, approx_z, e_min, e_max);
+        fit_linac(input_path + filename, min_mc_energy, max_mc_energy, min_data_energy, max_data_energy, mc_path,
+                  output_path + filename_wo_csv + "-fitter", approx_energy, approx_x, approx_z, e_min, e_max);
     }
 
     return;
