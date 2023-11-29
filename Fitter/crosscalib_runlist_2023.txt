@@ -1,0 +1,9 @@
+15    x-0    z+0    /Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/202305241215_oldGe_oldMCA_15MeV_Co.csv    /Users/jack/Software/GeAnalysis/MC/CrossCalibration/OldDetector/    /Users/jack/Software/GeAnalysis/Output/Fitter/202305241215_oldGe_oldMC15MeVA_fitter    16230    16330    15.57    15.67    -8.08441    0.191455
+8    x-0    z+0    /Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/202305241434_oldGe_oldMCA_8MeV_2el_Co.csv    /Users/jack/Software/GeAnalysis/MC/CrossCalibration/OldDetector/    /Users/jack/Software/GeAnalysis/Output/Fitter/202305241434_oldGe_oldMCA8MeV_2el_fitter    08850    08950    08.15    08.25    -8.08441    0.191455
+6    x-0    z+0    /Users/jack/Software/GeAnalysis/Data/CrossCalibration/OldDetector/20230524_oldGe_NewMCA_8MeV_Co-01-00.csv    /Users/jack/Software/GeAnalysis/MC/CrossCalibration/OldDetector/    /Users/jack/Software/GeAnalysis/Output/Fitter/20230524_oldGe_NewMCA_8MeVfitter    07250    07400    06.55    06.70    -8.08441    0.191455
+8    x-0    z+0    /Users/jack/Software/GeAnalysis/Data/CrossCalibration/NewDetector/202305231723_newGe_newMCA_8MeV_2el_Co-01-00.csv    /Users/jack/Software/GeAnalysis/MC/    /Users/jack/Software/GeAnalysis/Output/Fitter/202305231723_newGe_newMCA_8MeV_2el_fitter    08800    08900    08.10    08.30    -0.1665972    0.1482591
+8    x-0     z+0    /Users/jack/Software/GeAnalysis/Data/CrossCalibration/NewDetector/20230524_newGe_newMCA8MeV_Co-01-00.csv    /Users/jack/Software/GeAnalysis/MC/    /Users/jack/Software/GeAnalysis/Output/Fitter/20230524_newGe_newMCA8MeV_fitter    08800    09000    08.10    08.30    -0.1665972   0.1482591
+
+
+
+#NOTES:

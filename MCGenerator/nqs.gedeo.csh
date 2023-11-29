@@ -1,5 +1,5 @@
 #!/bin/csh -f
-make gedeo
+1;95;0cmake gedeo
 
 #set i = 5000
 #while ($i <= 5100)

@@ -1,0 +1,7 @@
+OldDetector/202305231446_oldGe_oldMCA_NiCf_Co.csv
+OldDetector/202305241215_oldGe_oldMCA_15MeV_Co.csv
+OldDetector/202305241434_oldGe_oldMCA_8MeV_2el_Co.csv
+OldDetector/20230524_OldGe_NewMCA_8MeV_Co-01-00.csv
+NewDetector/202305231723_newGe_newMCA_8MeV_2el_Co-01-00.csv
+NewDetector/20230523_newGe_newDAQ_Co_Ni-01-00.csv
+NewDetector/20230524_newGe_newMCA8MeV_Co-01-00.csv

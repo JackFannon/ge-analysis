@@ -4,7 +4,6 @@ all_headers.h
 *.png
 Data/
 Output/
-*.txt
 2021Analysis
 *.pdf
 *.hbk
@@ -17,5 +16,9 @@ MCGenerator/err/
 MCGenerator/log/
 MCGenerator/script/
 MCGenerator/test6MeV/
-.DS_Store
+.DS_store
+.dir-locals.el
+.clang-format
+*#
+compile_flags.txt
 .dir-locals.el
